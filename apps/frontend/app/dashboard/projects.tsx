@@ -3,6 +3,7 @@
 import axiosClient from "@/lib/axiosClient";
 import { useAuth } from "@clerk/nextjs"
 import { useQuery } from "@tanstack/react-query";
+import Link from "next/link";
 
 export function ProjectsList(){
 
@@ -39,11 +40,14 @@ export function ProjectsList(){
 
 function ProjectCard({project}:{project:Project}){
 
-    return <div>
+    return   <Link href={`/project/${project.id}`}>
+    <div>
         <h1>{project.name}</h1>
         {
             project.description&&(<h1>{project.description}</h1>)
         }
         <h1>{project.created_at}</h1>
     </div>
+        </Link>
+   
 }
