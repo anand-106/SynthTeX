@@ -10,6 +10,9 @@
   },
   "dependencies": {
     "@clerk/nextjs": "^6.36.5",
+    "@radix-ui/react-dialog": "^1.1.15",
+    "@tanstack/react-query": "^5.90.12",
+    "axios": "^1.13.2",
     "next": "16.1.1",
     "react": "19.2.3",
     "react-dom": "19.2.3",

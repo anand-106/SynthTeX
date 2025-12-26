@@ -14,7 +14,7 @@ async def clerk_signup(request:Request,db:Session=Depends(get_db)):
     id = data["id"]
     email = data["email_addresses"][0]["email_address"]
 
-    user = db.query(User).filter_by(external_auth_id=id).first()
+    user = db.query(User).filter((User.external_auth_id ==id)|(User.email==email)).first()
     if not user:
         print("User not exists on db. adding user.")
 
