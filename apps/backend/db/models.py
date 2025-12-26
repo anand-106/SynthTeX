@@ -59,19 +59,35 @@ class Project(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     user = relationship("User", back_populates="projects")
-    documents = relationship(
-        "Document",
+    files = relationship(
+        "File",
+        back_populates="project",
+        cascade="all, delete-orphan"
+    )
+    chat_messages = relationship(
+        "ChatMessage",
+        back_populates="project",
+        cascade="all, delete-orphan",
+        order_by="ChatMessage.created_at"
+    )
+    compilation_jobs = relationship(
+        "CompilationJob",
         back_populates="project",
         cascade="all, delete-orphan"
     )
 
 
 # ------------------------------------------------------------------
-# DOCUMENTS
+# FILES
 # ------------------------------------------------------------------
 
-class Document(Base):
-    __tablename__ = "documents"
+class FileType(enum.Enum):
+    source = "source"                  # LaTeX source files (.tex, .bib, .sty, images, etc.)
+    knowledge_base = "knowledge_base"  # Reference docs for AI generation
+
+
+class File(Base):
+    __tablename__ = "files"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     project_id = Column(
@@ -80,83 +96,47 @@ class Document(Base):
         nullable=False
     )
 
-    title = Column(String, nullable=False)
-    main_tex_path = Column(String, default="main.tex")
+    filename = Column(String, nullable=False)
+    file_type = Column(Enum(FileType, name="file_type"), nullable=False)
+    storage_path = Column(String, nullable=False)  # S3 or local path
+    mime_type = Column(String, nullable=True)
+    content = Column(Text, nullable=True)  # For text files, store content directly
 
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
-    project = relationship("Project", back_populates="documents")
-    versions = relationship(
-        "DocumentVersion",
-        back_populates="document",
-        cascade="all, delete-orphan",
-        order_by="DocumentVersion.version_number"
-    )
-    assets = relationship(
-        "Asset",
-        back_populates="document",
-        cascade="all, delete-orphan"
-    )
-
-
-# ------------------------------------------------------------------
-# DOCUMENT VERSIONS (IMMUTABLE)
-# ------------------------------------------------------------------
-
-class DocumentVersion(Base):
-    __tablename__ = "document_versions"
-
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    document_id = Column(
-        UUID(as_uuid=True),
-        ForeignKey("documents.id", ondelete="CASCADE"),
-        nullable=False
-    )
-
-    version_number = Column(Integer, nullable=False)
-    latex_source = Column(Text, nullable=False)
-
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-
-    document = relationship("Document", back_populates="versions")
-    prompts = relationship(
-        "Prompt",
-        back_populates="version",
-        cascade="all, delete-orphan"
-    )
-    compilation_jobs = relationship(
-        "CompilationJob",
-        back_populates="version",
-        cascade="all, delete-orphan"
-    )
+    project = relationship("Project", back_populates="files")
 
     __table_args__ = (
-        Index("idx_document_version_unique", "document_id", "version_number", unique=True),
+        Index("idx_file_project_filename", "project_id", "filename", unique=True),
     )
 
 
 # ------------------------------------------------------------------
-# PROMPTS (AI TRACEABILITY)
+# CHAT MESSAGES
 # ------------------------------------------------------------------
 
-class Prompt(Base):
-    __tablename__ = "prompts"
+class MessageRole(enum.Enum):
+    user = "user"
+    assistant = "assistant"
+
+
+class ChatMessage(Base):
+    __tablename__ = "chat_messages"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    document_version_id = Column(
+    project_id = Column(
         UUID(as_uuid=True),
-        ForeignKey("document_versions.id", ondelete="CASCADE"),
+        ForeignKey("projects.id", ondelete="CASCADE"),
         nullable=False
     )
 
-    user_prompt = Column(Text, nullable=False)
-    system_prompt = Column(Text, nullable=True)
-    model_name = Column(String, nullable=False)
+    role = Column(Enum(MessageRole, name="message_role"), nullable=False)
+    content = Column(Text, nullable=False)
 
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
-    version = relationship("DocumentVersion", back_populates="prompts")
+    project = relationship("Project", back_populates="chat_messages")
 
 
 # ------------------------------------------------------------------
@@ -174,9 +154,9 @@ class CompilationJob(Base):
     __tablename__ = "compilation_jobs"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    document_version_id = Column(
+    project_id = Column(
         UUID(as_uuid=True),
-        ForeignKey("document_versions.id", ondelete="CASCADE"),
+        ForeignKey("projects.id", ondelete="CASCADE"),
         nullable=False
     )
 
@@ -187,30 +167,7 @@ class CompilationJob(Base):
 
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
-    version = relationship("DocumentVersion", back_populates="compilation_jobs")
-
-
-# ------------------------------------------------------------------
-# ASSETS (IMAGES, BIB, CSV, ETC.)
-# ------------------------------------------------------------------
-
-class Asset(Base):
-    __tablename__ = "assets"
-
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    document_id = Column(
-        UUID(as_uuid=True),
-        ForeignKey("documents.id", ondelete="CASCADE"),
-        nullable=False
-    )
-
-    filename = Column(String, nullable=False)
-    storage_path = Column(String, nullable=False)
-    mime_type = Column(String, nullable=False)
-
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-
-    document = relationship("Document", back_populates="assets")
+    project = relationship("Project", back_populates="compilation_jobs")
 
 
 # ------------------------------------------------------------------
@@ -235,6 +192,7 @@ class Template(Base):
 # ------------------------------------------------------------------
 
 Index("idx_projects_user_id", Project.user_id)
-Index("idx_documents_project_id", Document.project_id)
-Index("idx_versions_document_id", DocumentVersion.document_id)
-Index("idx_compilation_version_id", CompilationJob.document_version_id)
+Index("idx_files_project_id", File.project_id)
+Index("idx_files_type", File.file_type)
+Index("idx_chat_messages_project_id", ChatMessage.project_id)
+Index("idx_compilation_project_id", CompilationJob.project_id)

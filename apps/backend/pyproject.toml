@@ -5,8 +5,12 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "boto3>=1.42.16",
     "clerk-backend-api>=4.2.0",
     "fastapi>=0.127.0",
+    "langchain>=1.2.0",
+    "langchain-google-genai>=4.1.2",
+    "langchain-groq>=1.1.1",
     "psycopg2>=2.9.11",
     "sqlalchemy>=2.0.45",
     "uvicorn[standard]>=0.40.0",
