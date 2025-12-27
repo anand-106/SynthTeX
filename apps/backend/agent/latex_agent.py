@@ -1,3 +1,4 @@
+import pprint
 from agent.agent import RepoAgent
 from agent.tools.tool_context import AgentContext
 from db.models import Project, MessageRole
@@ -25,6 +26,8 @@ async def latex_agent(
                             """
 
         full_history_block = history_markdown + latest_message_md
+
+        pprint.pprint(full_history_block)
 
         agent_instance = RepoAgent(
             system_prompt=f"""You are SynthTeX, an expert LaTeX document assistant. You help users create, edit, and manage professional LaTeX documents.

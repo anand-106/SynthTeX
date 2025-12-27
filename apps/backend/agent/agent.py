@@ -14,8 +14,9 @@ api_key = os.getenv("GROQ_API_KEY")
 llm = ChatGroq(
     model="llama-3.3-70b-versatile",
     api_key=api_key,
-    temperature=0,
-    max_retries=5
+    temperature=0.1,          # Slightly higher to avoid degeneration
+    max_tokens=4096,          # Limit output length
+    max_retries=5,
 )
 
 # api_key = os.getenv("GOOGLE_API_KEY")

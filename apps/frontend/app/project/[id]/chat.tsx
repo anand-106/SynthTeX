@@ -105,6 +105,32 @@ function ChatBar({setMessages}:{setMessages:Dispatch<SetStateAction<ChatMessage[
       socketRef.current = null;
     };
   }, [projectId, getToken, setMessages]);
+
+  const sendMessage = async () => {
+    if (!userMessage.trim()) return;
+
+    if(!socketRef.current || socketRef.current.readyState !== WebSocket.OPEN){
+      console.error("WebSocket is not connected");
+      return;
+    }
+
+    const msg: ChatMessage = {
+        id:null,
+        project_id:projectId!.toString(),
+      content: userMessage,
+      created_at:null,
+      role: "user",
+    };
+
+    
+    setMessages((prev) => [...prev, msg]);
+
+   
+    socketRef.current.send(JSON.stringify({ content: userMessage }));
+
+    setUserMessage("");
+  };
+
   return (
     <div className="w-full border border-white/20 rounded-lg p-2 flex flex-col items-end">
       <input
@@ -113,7 +139,12 @@ function ChatBar({setMessages}:{setMessages:Dispatch<SetStateAction<ChatMessage[
         placeholder="Enter your message."
         onChange={(e) => setUserMessage(e.target.value)}
       />
-      <div className=" cursor-pointer">
+      <div className=" cursor-pointer"
+      onClick={sendMessage}
+      onKeyDown={(e)=>{
+        if(e.key=="Enter") sendMessage()
+      }}
+      >
         <FaArrowCircleUp size={24} />
       </div>
     </div>

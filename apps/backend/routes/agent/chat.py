@@ -57,8 +57,11 @@ async def issue_chat_ws(websocket:WebSocket,project_id:str,db:Session=Depends(ge
                 content=user_content
             )
             db.add(user_msg)
+            db.commit()
 
-            response = latex_agent(user_message=user_content,project_id=project_id,project=Project)
+            db.refresh(project)
+
+            response = await latex_agent(user_message=user_content,project_id=project_id,project=project)
 
             assistant_msg = ChatMessage(
                 project_id=project.id,

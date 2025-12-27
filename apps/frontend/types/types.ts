@@ -6,9 +6,9 @@ export interface Project {
 }
 
 export type ChatMessage = {
-    id:number,
+    id:number | null,
     project_id:string,
     content:string,
-    created_at:string,
+    created_at:string | null,
     role:"user"|"assistant",
 }
