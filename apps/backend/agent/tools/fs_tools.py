@@ -49,6 +49,7 @@ def create_file(relative_path:str,content:str,runtime:ToolRuntime[AgentContext])
     - Modify any other project state
     """
     try:
+        print("accessed create file tool")
         safe_path = sanitize_relative_path(relative_path)
 
         key = f"{S3_ENV_PREFIX}/projects/{runtime.context.project_id}/files/{safe_path}"
@@ -67,6 +68,8 @@ def create_file(relative_path:str,content:str,runtime:ToolRuntime[AgentContext])
         db.commit()
         db.refresh(file_row)
         db.close()
+
+        print(f"created file {key}")
 
 
         return {

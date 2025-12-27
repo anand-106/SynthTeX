@@ -1,6 +1,7 @@
 "use client"
 
 import axiosClient from "@/lib/axiosClient";
+import { Project } from "@/types/types";
 import { useAuth } from "@clerk/nextjs"
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";

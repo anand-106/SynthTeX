@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { MdOutlineArrowOutward } from "react-icons/md";
 
 export default function Home() {
@@ -7,10 +8,12 @@ export default function Home() {
         <h1 className="text-6xl font-black">SynthTex</h1>
         <h1 className="text-3xl font-bold">Cursor for LaTex</h1> 
       </div>
-      <div className="flex justify-center gap-2 w-[200px] rounded-full bg-white/20 py-2 mt-14 cursor-pointer ">
+      <Link href='/dashboard'>
+      <div className="flex justify-center gap-2 w-[200px] rounded-full bg-white/20 py-2 mt-14">
         <h1>Continue</h1>
         <MdOutlineArrowOutward size={24} />
       </div>
+      </Link>
     </div>
   );
 }

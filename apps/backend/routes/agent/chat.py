@@ -7,7 +7,7 @@ from utils.auth.isSignedin import verify_clerk_user, verify_clerk_user_ws
 from sqlalchemy.orm import Session
 
 
-chat_router = APIRouter(prefix="/github/chat")
+chat_router = APIRouter()
 
 @chat_router.websocket('/ws/project/{project_id}')
 async def issue_chat_ws(websocket:WebSocket,project_id:str,db:Session=Depends(get_db)):

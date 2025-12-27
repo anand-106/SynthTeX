@@ -4,6 +4,9 @@ import axiosClient from "@/lib/axiosClient";
 import { useAuth } from "@clerk/nextjs";
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
+import { Chat } from "./chat";
+import { Editor } from "./editor";
+import { Project } from "@/types/types";
 
 export default function ProjectPage() {
   const params = useParams();
@@ -55,8 +58,12 @@ export default function ProjectPage() {
     );
   if (data)
     return (
-      <div className=" h-screen w-screen">
-        <h1>{data.name}</h1>
+      <div className=" h-[calc(100vh-4rem)] w-screen flex flex-col">
+        {/* <h1>{data.name}</h1> */}
+        <div className="w-full flex-1 flex">
+        <Editor />
+        <Chat />
+        </div>
       </div>
     );
 }
