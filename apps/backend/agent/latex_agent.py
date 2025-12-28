@@ -1,4 +1,3 @@
-import pprint
 from agent.agent import RepoAgent
 from agent.tools.tool_context import AgentContext
 from db.models import Project, MessageRole
@@ -11,79 +10,72 @@ async def latex_agent(
                             ):
 
     try:
-
-        history_markdown = "## Conversation History (Markdown)\n\n"
-
-        for m in project.chat_messages[-10:]: 
-            role = "User" if m.role == MessageRole.user else "Assistant"
-            history_markdown += f"**{role}:** {m.content}\n\n"
-
-        latest_message_md = f"""
-                            ```diff
-                            + Latest user message:
-                            + {user_message}
-                            ```
-                            """
-
-        full_history_block = history_markdown + latest_message_md
-
-        pprint.pprint(full_history_block)
+        
+        messages = []
+        
+        for m in project.chat_messages[-10:]:
+            role = "user" if m.role == MessageRole.user else "assistant"
+            messages.append({"role": role, "content": m.content})
+        
+        messages.append({"role": "user", "content": user_message})
 
         agent_instance = RepoAgent(
-            system_prompt=f"""You are SynthTeX, an expert LaTeX document assistant. You help users create, edit, and manage professional LaTeX documents.
+            system_prompt=f"""
+            You are a chat-based AI agent operating inside a project workspace.
 
-            ## Your Capabilities
-            - Create new LaTeX files (.tex, .bib, .sty, .cls)
-            - Write and structure academic papers, reports, theses, and presentations
-            - Generate properly formatted LaTeX code with correct syntax
-            - Organize multi-file projects with chapters, sections, and includes
-            - Add bibliographies, figures, tables, equations, and references
+            CRITICAL PRIORITY RULES:
+            1. Always prioritize the MOST RECENT user message above all prior context.
+            2. Treat previous messages as background only. The latest user message determines intent.
+            3. Never assume intent. Act only on explicit instructions.
 
-            ## Current Project
-            - **Project ID**: {project_id}
-            - **Project Name**: {project.name}
-            - **Description**: {project.description or "No description provided"}
+            INTENT CLASSIFICATION (MANDATORY):
+            Before responding, classify the latest user message into ONE of the following categories:
+            - INFORMATION / QUESTION
+            - CLARIFICATION REQUEST
+            - DISCUSSION / PLANNING
+            - ACTION REQUEST (create, modify, delete files or projects)
 
-            ## Guidelines
+            ACTION SAFETY RULES:
+            - You MUST NOT create, modify, or delete any project files unless the latest user message is an explicit ACTION REQUEST.
+            - If the user is asking a question, exploring ideas, requesting explanations, or planning, you must ONLY respond in natural language.
+            - If the intent is ambiguous, ask a clarifying question and WAIT for confirmation.
+            - NEVER infer permission to change the project from prior messages.
 
-            ### LaTeX Best Practices
-            - Always use proper document structure (\\documentclass, preamble, \\begin{{document}})
-            - Prefer semantic commands over manual formatting
-            - Use \\label and \\ref for cross-references
-            - Organize large documents with \\input or \\include
-            - Add comments to explain complex LaTeX constructs
+            PROJECT MUTATION RULE:
+            You may use project-modifying tools ONLY IF:
+            - The latest message clearly instructs you to do so
+            - The requested action is specific (what to create/modify, where, and why)
 
-            ### File Organization
-            - Main entry point should be `main.tex`
-            - Place chapters/sections in a `sections/` folder
-            - Store figures in `figures/` folder
-            - Keep bibliography in `references.bib`
+            If these conditions are not met, DO NOT call any tool.
 
-            ### Response Style
-            - Be concise but thorough
-            - Explain your changes briefly
-            - When creating files, confirm what was created
-            - If the user's request is ambiguous, ask for clarification
-            - Proactively suggest improvements when appropriate
+            RESPONSE BEHAVIOR:
+            - Be concise, precise, and context-aware.
+            - If the user asks a question, answer it directly.
+            - If the user asks for options, provide options without acting.
+            - If clarification is required, ask exactly what is missing.
 
-            ### Workflow
-            1. Understand the user's intent
-            2. Plan the document structure if needed
-            3. Create or modify files using available tools
-            4. Summarize what was done
+            FAIL-SAFE BEHAVIOR:
+            When in doubt:
+            - Do NOT modify the project
+            - Ask a clarifying question
+            - Explain what you are waiting for
 
-            You have access to tools for file operations. Use them to build the user's LaTeX project incrementally."""
+            You are not autonomous.
+            You are a controlled assistant.
+            You act only on explicit user intent.
+
+            Finally before creating a new file check if that file exits by using the tool list_files.
+            To update a file use search_replace tool.
+
+            """
         )
-
 
         agent = agent_instance.get_agent()
 
-
-        result =await agent.ainvoke({"messages":full_history_block},
-                                    context=AgentContext(
-                                        project_id=project_id
-                                    )
-                                    )
+        result = await agent.ainvoke(
+            {"messages": messages},
+            context=AgentContext(project_id=project_id)
+        )
         
 
         return str(result["messages"][-1].content)

@@ -1,5 +1,9 @@
+from datetime import datetime
 import pprint
+from typing_extensions import List
+from uuid import UUID
 from fastapi import APIRouter,HTTPException,Depends, WebSocket, WebSocketDisconnect
+from pydantic import BaseModel, ConfigDict
 from agent.latex_agent import latex_agent
 from db.models import ChatMessage, MessageRole, Project
 from db.get_db import get_db
@@ -8,6 +12,17 @@ from sqlalchemy.orm import Session
 
 
 chat_router = APIRouter()
+
+class MessagesOut(BaseModel):
+    id:UUID;
+    project_id:UUID;
+    role:MessageRole;
+    content:str;
+    created_at:datetime
+
+    model_config=ConfigDict(from_attributes=True,use_enum_values=True)
+
+
 
 @chat_router.websocket('/ws/project/{project_id}')
 async def issue_chat_ws(websocket:WebSocket,project_id:str,db:Session=Depends(get_db)):
@@ -82,4 +97,18 @@ async def issue_chat_ws(websocket:WebSocket,project_id:str,db:Session=Depends(ge
     finally:
         await websocket.close()
 
+
+
+@chat_router.get('/chat/project/{project_id}',response_model=List[MessagesOut])
+def get_chat_messages(project_id:str,db:Session=Depends(get_db),auth_user=Depends(verify_clerk_user)):
+
+    try:
+
+        messages = db.query(ChatMessage).filter(ChatMessage.project_id==project_id).all()
+
+        return messages
+    except Exception as e:
+
+        print("error getting messages")
+        raise HTTPException(500,"Error getting messages")
 

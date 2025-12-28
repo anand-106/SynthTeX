@@ -60,7 +60,7 @@ export default function ProjectPage() {
     return (
       <div className=" h-[calc(100vh-4rem)] w-screen flex flex-col">
         {/* <h1>{data.name}</h1> */}
-        <div className="w-full flex-1 flex">
+        <div className="w-full flex-1 flex h-full">
         <Editor />
         <Chat />
         </div>

@@ -4,19 +4,57 @@ import { Dispatch, SetStateAction, useEffect, useRef, useState } from "react";
 import { useAuth } from "@clerk/nextjs";
 import { useParams } from "next/navigation";
 import { ChatMessage } from "@/types/types";
+import { ChatView } from "./chatView";
+import axiosClient from "@/lib/axiosClient";
+import { useQuery } from "@tanstack/react-query";
 
 export function Chat() {
     const [messages, setMessages] = useState<ChatMessage[]>([]);
+    const param = useParams()
 
+    const project_id = param.id
+    const {getToken} = useAuth()
+
+    const get_messages = async ()=>{
+      try{
+        const token = await getToken()
+        const res = await axiosClient.get(`/chat/project/${project_id}`,{
+          headers:{
+            Authorization:`Bearer ${token}`
+          }
+        })
+        setMessages(res.data)
+        return res.data
+      }
+      catch(err){
+        console.error(err)
+      }
+    }
+
+    const {data,isLoading,error} = useQuery<ChatMessage[]>({
+      queryKey:[`project_chat_${project_id}`],
+      queryFn: get_messages,
+      staleTime: 5*60*1000,
+      refetchOnWindowFocus:false,
+      refetchOnMount:false
+  })
+
+  if (isLoading) return <div><h1>Loading...</h1></div>
+  if (error) return <div><h1>Error getting data sources.</h1></div>
   return (
-    <div className="w-[400px] h-full border-l border-white/50 flex flex-col">
-      <div className="w-full flex-1"></div>
+    <div className="w-[400px] h-full border-l border-white/50 flex flex-col overflow-hidden">
+      <div className="w-full flex-1 overflow-y-auto">
+        <ChatView messages={messages} />
+      </div>
+
       <div className="w-full p-2">
+
         <ChatBar setMessages={setMessages} />
       </div>
     </div>
   );
 }
+
 
 function ChatBar({setMessages}:{setMessages:Dispatch<SetStateAction<ChatMessage[]>>}) {
 
@@ -133,17 +171,18 @@ function ChatBar({setMessages}:{setMessages:Dispatch<SetStateAction<ChatMessage[
 
   return (
     <div className="w-full border border-white/20 rounded-lg p-2 flex flex-col items-end">
-      <input
+      <textarea
         className="outline-0 h-[100px] w-full  p-2"
         value={userMessage}
         placeholder="Enter your message."
         onChange={(e) => setUserMessage(e.target.value)}
+        onKeyDown={(e)=>{
+          if(e.key=="Enter") sendMessage()
+        }}
       />
       <div className=" cursor-pointer"
       onClick={sendMessage}
-      onKeyDown={(e)=>{
-        if(e.key=="Enter") sendMessage()
-      }}
+      
       >
         <FaArrowCircleUp size={24} />
       </div>
