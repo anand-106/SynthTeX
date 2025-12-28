@@ -2,10 +2,11 @@ from uuid import UUID
 from typing_extensions import List
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from starlette.background import P
+from utils.crud.file_tree_builder import build_file_tree
+from utils.s3.uploader import read_s3_bytes
 from db.get_db import get_db
 from utils.auth.isSignedin import verify_clerk_user
-from db.models import Project
+from db.models import File, Project
 from routes.crud.models import ProjectModel, ProjectsOut
 
 crud_router = APIRouter()
@@ -39,3 +40,52 @@ def get_project(project_id:UUID,auth_user=Depends(verify_clerk_user),db:Session=
     
     return project
 
+
+@crud_router.get('/file/{file_id}')
+def get_file(file_id:UUID,auth_user=Depends(verify_clerk_user),db:Session=Depends(get_db)):
+
+    
+    try:
+        
+        file_data = db.query(File).filter(File.id==file_id).first()
+
+        if not file_data:
+            raise HTTPException(404,"File not found")
+        
+        raw_data = read_s3_bytes(file_data.storage_path)
+
+        return {
+            "id":file_data.id,
+            "file_name":file_data.filename,
+            "content":raw_data.decode('utf-8')
+        }
+        
+    except Exception as e:
+
+        raise HTTPException(500,f"Error getting File {e}")
+
+
+@crud_router.get('/project/{project_id}/files')
+def get_file_tree(project_id:str,auth_user=Depends(verify_clerk_user),db:Session=Depends(get_db)):
+
+    try:
+        
+        file_data = db.query(File).filter(File.project_id == project_id,File.file_type=="source").all()
+
+        if not file_data:
+            return {
+            "project_id":project_id,
+            "tree":[]
+        }
+        
+        
+        tree = build_file_tree(file_data,project_id)
+
+        return {
+            "project_id":project_id,
+            "tree":tree
+        }
+        
+    except Exception as e:
+
+        raise HTTPException(500,f"Error getting project file tree {e}")

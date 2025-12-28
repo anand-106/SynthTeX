@@ -5,8 +5,9 @@ import { useAuth } from "@clerk/nextjs";
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
 import { Chat } from "./chat";
-import { Editor } from "./editor";
+import { EditorSection } from "./editor";
 import { Project } from "@/types/types";
+import { ProjectTree } from "./projectTree";
 
 export default function ProjectPage() {
   const params = useParams();
@@ -61,7 +62,8 @@ export default function ProjectPage() {
       <div className=" h-[calc(100vh-4rem)] w-screen flex flex-col">
         {/* <h1>{data.name}</h1> */}
         <div className="w-full flex-1 flex h-full">
-        <Editor />
+        <ProjectTree />
+        <EditorSection />
         <Chat />
         </div>
       </div>

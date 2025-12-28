@@ -12,3 +12,16 @@ export type ChatMessage = {
     created_at:string | null,
     role:"user"|"assistant",
 }
+
+export type FileTreeNode = {
+    id: string;
+    name: string;
+    isFolder: boolean;
+    fileType?: "source" | "knowledge_base";
+    children?: FileTreeNode[];
+  };
+  
+  export type FileTreeResponse = {
+    project_id: string;
+    tree: FileTreeNode[];
+  };
