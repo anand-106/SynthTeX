@@ -3,16 +3,33 @@ import { FileTreeNode, FileTreeResponse } from "@/types/types";
 import { useAuth } from "@clerk/nextjs";
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
+import { CSSProperties } from "react";
 import { Tree,NodeRendererProps, NodeApi } from "react-arborist";
 import { FaFolder } from "react-icons/fa";
 import { FaFile } from "react-icons/fa";
 
-export function ProjectTree(){
+export function ProjectTree({setLatex}:{setLatex:React.Dispatch<React.SetStateAction<string>>}){
 
     const {getToken} = useAuth()
     const param = useParams()
 
     const projectId = param.id
+
+    const FetchFileContent = async (fileId:string) =>{
+        try{
+            const token = await getToken();
+            const res = await axiosClient.get(`/file/${fileId}`,{
+                headers:{
+                    Authorization:`Bearer ${token}`
+                }
+            })
+            setLatex(res.data.content)
+        return res.data
+        }
+        catch(err){
+            console.error(err)
+        }
+    }
 
     const getProjectTree= async()=>{
         try{
@@ -49,16 +66,16 @@ export function ProjectTree(){
         rowHeight={28}
 
         >
-        {Node}
+        {(props)=><Node {...props} onFileClick={FetchFileContent} />}
         </Tree>
     </div>
 }
 
-function Node({node,style,dragHandle}:NodeRendererProps<FileTreeNode>){
+function Node({node,style,onFileClick}:{node:NodeApi<FileTreeNode>,style:CSSProperties,onFileClick:(id:string)=>void}){
     const isFolder = node.data.isFolder
-    return <div style={style} ref={dragHandle}>
+    return <div style={style}>
         {
-            isFolder?<Folder node={node} />:<File node={node} />
+            isFolder?<Folder node={node} />:<File onFileClick={onFileClick} node={node} />
         }
     </div>
 }
@@ -70,8 +87,16 @@ function Folder({node}:{node:NodeApi<FileTreeNode>}){
     </div>
 }
 
-function File({node}:{node:NodeApi<FileTreeNode>}){
-    return <div className="flex gap-2 items-center">
+function File({node,onFileClick}:{node:NodeApi<FileTreeNode>,onFileClick:(id:string)=>void}){
+
+
+
+
+    return <div className="flex gap-2 items-center  cursor-pointer"
+    onClick={()=>{
+        onFileClick(node.data.id)
+    }}
+    >
         <FaFile /> 
         <h1>{node.data.name}</h1>
     </div>

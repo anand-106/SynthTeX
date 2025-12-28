@@ -8,12 +8,14 @@ import { Chat } from "./chat";
 import { EditorSection } from "./editor";
 import { Project } from "@/types/types";
 import { ProjectTree } from "./projectTree";
+import { useState } from "react";
 
 export default function ProjectPage() {
   const params = useParams();
   const { getToken } = useAuth();
 
   const projectId = params.id;
+  const [latex, setLatex] = useState("");
 
   if (!projectId) {
     return (
@@ -62,8 +64,8 @@ export default function ProjectPage() {
       <div className=" h-[calc(100vh-4rem)] w-screen flex flex-col">
         {/* <h1>{data.name}</h1> */}
         <div className="w-full flex-1 flex h-full">
-        <ProjectTree />
-        <EditorSection />
+        <ProjectTree  setLatex={setLatex}/>
+        <EditorSection latex={latex} setLatex={setLatex} />
         <Chat />
         </div>
       </div>
