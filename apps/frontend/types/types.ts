@@ -25,3 +25,9 @@ export type FileTreeNode = {
     project_id: string;
     tree: FileTreeNode[];
   };
+
+
+  export type SelectedFile ={
+    type : "latex" | "pdf",
+    content : string
+  }

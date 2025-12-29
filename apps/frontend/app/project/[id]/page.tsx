@@ -6,9 +6,12 @@ import { useQuery } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
 import { Chat } from "./chat";
 import { EditorSection } from "./editor";
-import { Project } from "@/types/types";
+import { Project, SelectedFile } from "@/types/types";
 import { ProjectTree } from "./projectTree";
 import { useState } from "react";
+import { PDFViewer } from "./pdfView";
+
+
 
 export default function ProjectPage() {
   const params = useParams();
@@ -16,6 +19,7 @@ export default function ProjectPage() {
 
   const projectId = params.id;
   const [latex, setLatex] = useState("");
+  const [selectedFile, setSelectedFile] = useState<SelectedFile | null>({"type":"latex","content":""});
 
   if (!projectId) {
     return (
@@ -64,8 +68,11 @@ export default function ProjectPage() {
       <div className=" h-[calc(100vh-4rem)] w-screen flex flex-col">
         {/* <h1>{data.name}</h1> */}
         <div className="w-full flex-1 flex h-full">
-        <ProjectTree  setLatex={setLatex}/>
-        <EditorSection latex={latex} setLatex={setLatex} />
+        <ProjectTree setSelectedFile={setSelectedFile}  setLatex={setLatex}/>
+        {
+          selectedFile?.type=="latex"?<EditorSection latex={latex} setLatex={setLatex} />:<PDFViewer url={selectedFile!.content} />
+        }
+        
         <Chat />
         </div>
       </div>

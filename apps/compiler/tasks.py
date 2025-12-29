@@ -51,10 +51,15 @@ async def latex_job_compiler(ctx,job_data):
             compile_job.pdf_path = key
             compile_job.status = CompileStatus.success
         
-        file_row = File(project_id=project_id,filename=f"{entry_file}.pdf",storage_path=key,file_type=FileType.source,content="")
-        db.add(file_row)
-        db.commit()
-        db.refresh(file_row)
+        file_row=db.query(File).filter(File.project_id==project_id,File.storage_path==key,File.file_type==FileType.source).first()
+        if not file_row:
+
+            file_row = File(project_id=project_id,filename=f"{entry_file}.pdf",storage_path=key,file_type=FileType.source,content="")
+            db.add(file_row)
+            db.commit()
+            db.refresh(file_row)
+        else:
+            print("db record already exists")
     finally:
         db.close()
 

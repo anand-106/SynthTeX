@@ -21,7 +21,7 @@ def copy_project_to_e2b(files,sandbox:Sandbox):
 
         path = Path(local_path)
         if path.parent != Path("."):
-            sandbox.run(f"mkdir -p {path.parent}")
+            sandbox.commands.run(f"mkdir -p {path.parent}")
 
         sandbox.files.write(
             local_path,

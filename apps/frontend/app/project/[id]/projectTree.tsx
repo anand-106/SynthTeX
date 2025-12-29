@@ -1,30 +1,54 @@
 import axiosClient from "@/lib/axiosClient";
-import { FileTreeNode, FileTreeResponse } from "@/types/types";
+import { FileTreeNode, FileTreeResponse, SelectedFile } from "@/types/types";
 import { useAuth } from "@clerk/nextjs";
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
 import { CSSProperties } from "react";
 import { Tree,NodeRendererProps, NodeApi } from "react-arborist";
 import { FaFolder } from "react-icons/fa";
+import { FaFolderOpen } from "react-icons/fa";
 import { FaFile } from "react-icons/fa";
 
-export function ProjectTree({setLatex}:{setLatex:React.Dispatch<React.SetStateAction<string>>}){
+export function ProjectTree({setLatex,setSelectedFile}:{setLatex:React.Dispatch<React.SetStateAction<string>>,setSelectedFile:React.Dispatch<React.SetStateAction<SelectedFile|null>>}){
 
     const {getToken} = useAuth()
     const param = useParams()
 
     const projectId = param.id
 
-    const FetchFileContent = async (fileId:string) =>{
+    
+
+    const FetchFileContent = async (fileId:string,FileName:string) =>{
         try{
             const token = await getToken();
-            const res = await axiosClient.get(`/file/${fileId}`,{
-                headers:{
-                    Authorization:`Bearer ${token}`
-                }
-            })
-            setLatex(res.data.content)
-        return res.data
+            const isPDF = FileName.toLowerCase().endsWith('.pdf')
+            if(isPDF){
+                const res = await axiosClient.get(`/file/${fileId}/url`,{
+                    headers:{
+                        Authorization:`Bearer ${token}`
+                    }
+            
+                })
+                console.log("received presigned url",res.data.url)
+                setSelectedFile({
+                    "type":"pdf",
+                    "content":res.data.url
+                })
+            }
+            else{
+
+                const res = await axiosClient.get(`/file/${fileId}`,{
+                    headers:{
+                        Authorization:`Bearer ${token}`
+                    }
+                })
+                setSelectedFile({
+                    "type":"latex",
+                    "content":res.data.content
+                })
+                setLatex(res.data.content)
+                
+            }
         }
         catch(err){
             console.error(err)
@@ -71,7 +95,7 @@ export function ProjectTree({setLatex}:{setLatex:React.Dispatch<React.SetStateAc
     </div>
 }
 
-function Node({node,style,onFileClick}:{node:NodeApi<FileTreeNode>,style:CSSProperties,onFileClick:(id:string)=>void}){
+function Node({node,style,onFileClick}:{node:NodeApi<FileTreeNode>,style:CSSProperties,onFileClick:(id:string,FileName:string)=>Promise<void>}){
     const isFolder = node.data.isFolder
     return <div style={style}>
         {
@@ -81,23 +105,27 @@ function Node({node,style,onFileClick}:{node:NodeApi<FileTreeNode>,style:CSSProp
 }
 
 function Folder({node}:{node:NodeApi<FileTreeNode>}){
-    return <div className="flex">
-        <FaFolder /> 
+    return <div className="flex gap-2 items-center  cursor-pointer"
+    onClick={()=>node.toggle()}
+    >{
+
+        node.isOpen?<FaFolderOpen/>:<FaFolder /> 
+    }
         <h1>{node.data.name}</h1>
     </div>
 }
 
-function File({node,onFileClick}:{node:NodeApi<FileTreeNode>,onFileClick:(id:string)=>void}){
+function File({node,onFileClick}:{node:NodeApi<FileTreeNode>,onFileClick:(id:string,fileName:string)=>void}){
 
 
 
 
     return <div className="flex gap-2 items-center  cursor-pointer"
     onClick={()=>{
-        onFileClick(node.data.id)
+        onFileClick(node.data.id,node.data.name)
     }}
     >
-        <FaFile /> 
+        <FaFile size={15} /> 
         <h1>{node.data.name}</h1>
     </div>
 }
