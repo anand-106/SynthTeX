@@ -88,16 +88,27 @@ function ChatBar({setMessages}:{setMessages:Dispatch<SetStateAction<ChatMessage[
         try {
           const data = JSON.parse(event.data);
 
-          if (data.sender === "assistant") {
+          if (data.sender === "model") {
             const aiMessage: ChatMessage = {
-              id: data.id,
+              id: Date.now(),
               project_id:data.project_id,
               created_at:data.created_at,
               content: data.content,
-              role: "assistant",
+              role: "model",
             };
             setMessages((prev) => [...prev, aiMessage]);
-          } else {
+          }
+          if (data.sender === "tools") {
+            const aiMessage: ChatMessage = {
+              id: Date.now(),
+              project_id:data.project_id,
+              created_at:data.created_at,
+              content: data.content,
+              role: "tools",
+            };
+            setMessages((prev) => [...prev, aiMessage]);
+          } 
+          else {
             console.log("from ws: ", data);
           }
         } catch {

@@ -1,12 +1,19 @@
+import json
+import pprint
+
+from sqlalchemy.orm import Session
 from agent.agent import RepoAgent
 from agent.tools.tool_context import AgentContext
-from db.models import Project, MessageRole
+from db.models import ChatMessage, Project, MessageRole
+from fastapi import WebSocket
 
 
 async def latex_agent(      
                             project: Project,
                             user_message: str,
-                            project_id: str
+                            project_id: str,
+                            ws: WebSocket,
+                            db: Session
                             ):
 
     try:
@@ -72,13 +79,44 @@ async def latex_agent(
 
         agent = agent_instance.get_agent()
 
-        result = await agent.ainvoke(
-            {"messages": messages},
-            context=AgentContext(project_id=project_id)
-        )
-        
+        STEP_TO_ROLE = {
+            "model": MessageRole.model,
+            "tools": MessageRole.tools,
+            "user": MessageRole.user
+        }
 
-        return str(result["messages"][-1].content)
+        async for chunk in agent.astream(
+            {"messages": messages},
+            context=AgentContext(project_id=project_id),
+            stream_mode="updates"
+        ):
+            for step,data in chunk.items():
+                last_message = data['messages'][-1].content_blocks
+
+                pprint.pprint({
+                    "step":step,
+                    "content":last_message
+                })
+                for mes in last_message:
+                    string_mes = json.dumps(mes)
+                    await ws.send_json({
+                        "sender":step,
+                        "content":string_mes
+                    })
+
+                    message_row = ChatMessage(
+                    project_id=project.id,
+                    role=STEP_TO_ROLE[step],
+                    content=string_mes
+                    )
+                    db.add(message_row)
+                    db.commit()
+                    db.refresh(message_row)
+
+
+
+        
+        
 
     except Exception as e:
         print(f"error happend {e}")

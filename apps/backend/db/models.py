@@ -118,7 +118,9 @@ class File(Base):
 
 class MessageRole(enum.Enum):
     user = "user"
-    assistant = "assistant"
+    model = "model"
+    tools = "tools"
+
 
 
 class ChatMessage(Base):

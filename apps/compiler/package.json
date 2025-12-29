@@ -1,0 +1,11 @@
+{
+    "name": "compiler",
+    "scripts": {
+      "dev": "PYTHONPATH=.. uv run arq worker.WorkerSettings",
+      "start": "PYTHONPATH=.. uv run arq worker.WorkerSettings",
+      "build": "echo 'Backend build completed'",
+      "lint": "echo 'Backend lint completed'",
+      "check-types": "echo 'Backend type check completed'"
+    }
+  }
+  

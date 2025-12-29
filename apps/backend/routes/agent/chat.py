@@ -76,18 +76,10 @@ async def issue_chat_ws(websocket:WebSocket,project_id:str,db:Session=Depends(ge
 
             db.refresh(project)
 
-            response = await latex_agent(user_message=user_content,project_id=project_id,project=project)
+            await latex_agent(user_message=user_content,project_id=project_id,project=project,db=db,ws=websocket)
 
-            assistant_msg = ChatMessage(
-                project_id=project.id,
-                role=MessageRole.assistant,
-                content=response
-            )
-            db.add(assistant_msg)
-            db.commit()
 
-            await websocket.send_json({"sender": "assistant", "content": response})
-            pprint.pprint(response)
+            # await websocket.send_json({"sender": "assistant", "content": response})
 
     except WebSocketDisconnect:
         print("Ws disconnected")

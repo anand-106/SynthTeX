@@ -10,7 +10,7 @@ export type ChatMessage = {
     project_id:string,
     content:string,
     created_at:string | null,
-    role:"user"|"assistant",
+    role:"user"|"model"|"tools",
 }
 
 export type FileTreeNode = {

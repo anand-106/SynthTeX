@@ -1,3 +1,4 @@
+import os
 from uuid import UUID
 from typing_extensions import List
 from fastapi import APIRouter, Depends, HTTPException
@@ -7,9 +8,16 @@ from utils.s3.uploader import read_s3_bytes
 from db.get_db import get_db
 from utils.auth.isSignedin import verify_clerk_user
 from db.models import File, Project
-from routes.crud.models import ProjectModel, ProjectsOut
+from routes.crud.models import CompileIn, ProjectModel, ProjectsOut
+from dotenv import load_dotenv
+from arq import create_pool
+from arq.connections import RedisSettings
+
+load_dotenv()
 
 crud_router = APIRouter()
+
+REDIS_URL_COMPILER = os.getenv("REDIS_URL_SYNCER", "redis://localhost:6379")
 
 @crud_router.post('/project')
 def create_project(project:ProjectModel,auth_user=Depends(verify_clerk_user),db:Session=Depends(get_db)):
@@ -89,3 +97,10 @@ def get_file_tree(project_id:str,auth_user=Depends(verify_clerk_user),db:Session
     except Exception as e:
 
         raise HTTPException(500,f"Error getting project file tree {e}")
+
+@crud_router.post('/compile')
+async def compile_latex_project(request:CompileIn,auth_user=Depends(verify_clerk_user),db:Session=Depends(get_db)):
+
+    latex_compiler = await create_pool(RedisSettings.from_dsn(REDIS_URL_COMPILER))
+
+    await latex_compiler.enqueue_job("latex_job_compiler",{"project_id":request.project_id})
