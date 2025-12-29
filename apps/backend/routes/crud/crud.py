@@ -7,7 +7,7 @@ from utils.crud.file_tree_builder import build_file_tree
 from utils.s3.uploader import read_s3_bytes
 from db.get_db import get_db
 from utils.auth.isSignedin import verify_clerk_user
-from db.models import File, Project
+from db.models import CompilationJob, CompileStatus, File, Project
 from routes.crud.models import CompileIn, ProjectModel, ProjectsOut
 from dotenv import load_dotenv
 from arq import create_pool
@@ -105,9 +105,23 @@ async def compile_latex_project(request:CompileIn,auth_user=Depends(verify_clerk
 
     files= [{"filename":f.filename,"file_type":f.file_type.value,"path":f.storage_path} for f in files_db ]
 
+    compile_row = CompilationJob(project_id=request.project_id,status=CompileStatus.queued)
+
+    db.add(compile_row)
+    db.commit()
+    db.refresh(compile_row)
+
     latex_compiler = await create_pool(RedisSettings.from_dsn(REDIS_URL_COMPILER))
 
-    await latex_compiler.enqueue_job("latex_job_compiler",{
+    await latex_compiler.enqueue_job("latex_job_compiler",{     
+                                                                "job_id":str(compile_row.id),
                                                                 "project_id":request.project_id,
                                                                 "files":files
                                                             })
+    
+    return {
+        "job_id":compile_row.id,
+        "status":compile_row.status.value
+    }
+    
+

@@ -9,4 +9,6 @@ dependencies = [
     "boto3>=1.42.17",
     "dotenv>=0.9.9",
     "e2b>=2.9.0",
+    "psycopg2>=2.9.11",
+    "sqlalchemy>=2.0.45",
 ]
