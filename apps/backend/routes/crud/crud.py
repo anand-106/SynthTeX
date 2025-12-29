@@ -101,6 +101,13 @@ def get_file_tree(project_id:str,auth_user=Depends(verify_clerk_user),db:Session
 @crud_router.post('/compile')
 async def compile_latex_project(request:CompileIn,auth_user=Depends(verify_clerk_user),db:Session=Depends(get_db)):
 
+    files_db = db.query(File).filter(File.project_id==request.project_id).all()
+
+    files= [{"filename":f.filename,"file_type":f.file_type.value,"path":f.storage_path} for f in files_db ]
+
     latex_compiler = await create_pool(RedisSettings.from_dsn(REDIS_URL_COMPILER))
 
-    await latex_compiler.enqueue_job("latex_job_compiler",{"project_id":request.project_id})
+    await latex_compiler.enqueue_job("latex_job_compiler",{
+                                                                "project_id":request.project_id,
+                                                                "files":files
+                                                            })

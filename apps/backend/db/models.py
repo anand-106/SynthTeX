@@ -56,6 +56,8 @@ class Project(Base):
     name = Column(String, nullable=False)
     description = Column(Text, nullable=True)
 
+    entry_file = Column(String, nullable=False, default="main.tex")
+
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     user = relationship("User", back_populates="projects")
