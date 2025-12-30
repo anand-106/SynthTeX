@@ -1,7 +1,7 @@
 import axiosClient from "@/lib/axiosClient";
 import { FileTreeNode, FileTreeResponse, SelectedFile } from "@/types/types";
 import { useAuth } from "@clerk/nextjs";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
 import { CSSProperties } from "react";
 import { Tree,NodeRendererProps, NodeApi } from "react-arborist";
@@ -13,6 +13,7 @@ export function ProjectTree({setLatex,setSelectedFile}:{setLatex:React.Dispatch<
 
     const {getToken} = useAuth()
     const param = useParams()
+    const queryClient = useQueryClient();
 
     const projectId = param.id
 
@@ -37,16 +38,30 @@ export function ProjectTree({setLatex,setSelectedFile}:{setLatex:React.Dispatch<
             }
             else{
 
-                const res = await axiosClient.get(`/file/${fileId}`,{
-                    headers:{
-                        Authorization:`Bearer ${token}`
+                const cached = queryClient.getQueryData<SelectedFile>(['file',fileId])
+
+                if(cached){
+                    setSelectedFile(cached)
+                    setLatex(cached.content)
+                }
+                else{
+                    const res = await axiosClient.get(`/file/${fileId}`,{
+                        headers:{
+                            Authorization:`Bearer ${token}`
+                        }
+                    })
+                    const data =  {
+                        "type":"latex" as const,
+                        "content":res.data.content
                     }
-                })
-                setSelectedFile({
-                    "type":"latex",
-                    "content":res.data.content
-                })
-                setLatex(res.data.content)
+                    queryClient.setQueryData(['file',fileId],data)
+                    setSelectedFile(data)
+                    setLatex(res.data.content)
+
+
+                }
+
+                
                 
             }
         }

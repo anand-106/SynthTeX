@@ -17,8 +17,8 @@ function UserMessage({message}:{message:ChatMessage}){
 }
 
 function AIMessage({message}:{message:ChatMessage}){
-    console.log("Raw content:", message.content);
-    console.log("Type of content:", typeof message.content);
+    // console.log("Raw content:", message.content);
+    // console.log("Type of content:", typeof message.content);
     const mes_dict = JSON.parse(message.content)
     if (mes_dict.type == 'text')
      return <div className=" px-2 py-4">

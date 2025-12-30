@@ -119,6 +119,35 @@ def get_file_tree(project_id:str,auth_user=Depends(verify_clerk_user),db:Session
 
         raise HTTPException(500,f"Error getting project file tree {e}")
 
+@crud_router.get('/project/{project_id}/source-files')
+def get_all_source_files(project_id:UUID,auth_user=Depends(verify_clerk_user),db:Session=Depends(get_db)):
+
+    try:
+
+        files = db.query(File).filter(File.project_id==project_id).all()
+
+        result = []
+        for f in files:
+            try:
+                content = read_s3_bytes(f.storage_path).decode('utf-8')
+                result.append({
+                    "id":str(f.id),
+                    "filename":f.filename,
+                    "content":content,
+                    "path":f.storage_path
+                })
+
+            except Exception as e:
+                print(f"Error reading file : {f.filename} path: {f.storage_path}")
+                continue
+        
+        return {
+            "files":result
+        }
+    except Exception as e:
+        raise HTTPException(500,f"Error getting files {str(e)}")
+
+
 @crud_router.post('/compile')
 async def compile_latex_project(request:CompileIn,auth_user=Depends(verify_clerk_user),db:Session=Depends(get_db)):
 

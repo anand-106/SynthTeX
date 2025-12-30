@@ -122,6 +122,8 @@ async def latex_agent(
                     db.commit()
                     db.refresh(message_row)
 
+        print("Request ended")
+
 
 
         
