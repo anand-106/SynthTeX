@@ -18,6 +18,11 @@ def sanitize_relative_path(path: str) -> str:
     path = path.replace("..", "")
     return path
 
+def normalize_latex_string(s: str) -> str:
+    s = s.replace("\\'", "'") 
+    s = s.replace("\\\\", "\\")
+    return s
+
 @tool
 def create_file(relative_path: str, content: str, runtime: Annotated[ToolRuntime[AgentContext], InjectedToolArg]):
     """
@@ -55,6 +60,8 @@ def create_file(relative_path: str, content: str, runtime: Annotated[ToolRuntime
         print("accessed create file tool")
         safe_path = sanitize_relative_path(relative_path)
 
+        content = normalize_latex_string(content)
+
         key = f"{S3_ENV_PREFIX}/projects/{runtime.context.project_id}/files/{safe_path}"
         db = SessionLocal()
 
@@ -83,6 +90,7 @@ def create_file(relative_path: str, content: str, runtime: Annotated[ToolRuntime
 
 
         return json.dumps({
+            "tool_name":"create_file",
             "status": "created",
             "path": safe_path,
             "s3_key": key
@@ -135,7 +143,7 @@ def list_files(runtime: Annotated[ToolRuntime[AgentContext], InjectedToolArg]):
 
         pprint.pprint(files)
         db.close()
-        return json.dumps({"files": files})
+        return json.dumps({"tool_name":"list_files","files": files})
     
     except Exception as e:
         print(f"Error occured while listing files {e}")
@@ -178,15 +186,16 @@ def get_file_content(file_path: str, runtime: Annotated[ToolRuntime[AgentContext
     try:
         data = read_s3_bytes(file_path)
         content = data.decode("utf-8")
-        return content  
+        return {
+            "tool_name":"get_file_content",
+            "file_path":file_path,
+            "content":content
+        }  
     except Exception as e:
         print(f"Error reading file {file_path}: {e}")
         return f"Error reading file: {str(e)}"
 
-def normalize_latex_string(s: str) -> str:
-    s = s.replace("\\'", "'") 
-    s = s.replace("\\\\", "\\")
-    return s
+
 
 @tool
 def search_replace(file_path: str, old_string: str, new_string: str, runtime: Annotated[ToolRuntime[AgentContext], InjectedToolArg]):
@@ -244,8 +253,10 @@ def search_replace(file_path: str, old_string: str, new_string: str, runtime: An
         data = read_s3_bytes(file_path)
         content = data.decode("utf-8")
 
+        normalized_content = normalize_latex_string(content)
+
       
-        occurrences = content.count(old_string)
+        occurrences = normalized_content.count(old_string)
 
         if occurrences == 0:
             return json.dumps({
@@ -260,7 +271,7 @@ def search_replace(file_path: str, old_string: str, new_string: str, runtime: An
                 "message": f"The string appears {occurrences} times. Include more context to make it unique."
             })
 
-        new_content = content.replace(old_string, new_string, 1)
+        new_content = normalized_content.replace(old_string, new_string, 1)
 
         upload_bytes(
             key=file_path,
@@ -281,6 +292,7 @@ def search_replace(file_path: str, old_string: str, new_string: str, runtime: An
         print(f"Successfully replaced text in {file_path}")
 
         return json.dumps({
+            "tool_name":"search_replace",
             "status": "replaced",
             "occurrences": 1,
             "path": file_path

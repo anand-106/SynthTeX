@@ -82,6 +82,23 @@ async def latex_agent(
             5. Additional content (chapters, sections, packages) can be in separate .tex files and included via \\input{} or \\include{}.
             6. If a user requests a different name for the main file, politely explain that "main.tex" is required as the compilation entry point and offer to use their preferred name as an included file instead.
 
+            LATEX SYNTAX RULES:
+            - NEVER use Unicode subscript/superscript characters (₂, ³, etc.) - they don't work with pdflatex
+            - For subscripts, use LaTeX math mode: CO$_2$ NOT CO₂
+            - For superscripts, use LaTeX math mode: x$^2$ NOT x²
+            - Use regular hyphens (-) not Unicode dashes (‑, –, —)
+            - All chemical formulas should be in math mode: $H_2O$, $CO_2$, $O_2$
+            - For text subscripts outside math, use \\textsubscript{2}
+            - Always use ASCII characters when possible
+
+            LATEX PACKAGE RULES:
+            - Always include commonly needed packages in main.tex:
+            - \\usepackage{amsmath} for math equations
+            - \\usepackage{graphicx} for images
+            - \\usepackage[utf8]{inputenc} for UTF-8 support
+            - When writing math formulas that use arrows (\\xrightarrow, \\xleftarrow), 
+            ensure amsmath is loaded.
+
             CRITICAL: The project will be compiled starting from "main.tex". Any other structure will cause compilation to fail.
             """
         )

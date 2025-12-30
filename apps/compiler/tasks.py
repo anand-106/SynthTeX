@@ -25,18 +25,21 @@ async def latex_job_compiler(ctx,job_data):
 
     copy_project_to_e2b(files=files,sandbox=sandbox)
 
-    result = sandbox.commands.run(
-        cwd='/home/user',
-        cmd=(
-            "latexmk -pdf "
-            "-interaction=nonstopmode "
-            "-halt-on-error "
-            "-file-line-error "
-            "-outdir=output "
-            f"{entry_file}.tex"
-        ),
-        timeout=60,
-    )
+    try:
+        result = sandbox.commands.run(
+            cwd='/home/user',
+            cmd=(
+                "latexmk -pdf "
+                "-interaction=nonstopmode "
+                "-f "
+                "-file-line-error "
+                "-outdir=output "
+                f"{entry_file}.tex"
+            ),
+            timeout=60,
+        )
+    except Exception as e:
+        print(f"Compilation had errors: {e}")
 
     key = f"{S3_ENV_PREFIX}/projects/{project_id}/files/output/{entry_file}.pdf"
 
@@ -62,8 +65,6 @@ async def latex_job_compiler(ctx,job_data):
             print("db record already exists")
     finally:
         db.close()
-
-    pprint(result)
 
     
 
