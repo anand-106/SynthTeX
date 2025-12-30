@@ -10,6 +10,7 @@ import { Project, SelectedFile } from "@/types/types";
 import { ProjectTree } from "./projectTree";
 import { useState } from "react";
 import dynamic from "next/dynamic";
+import { useEditorStore } from "@/stores/editorStore";
 
 
 const PDFViewer = dynamic(
@@ -24,10 +25,9 @@ export default function ProjectPage() {
   const { getToken } = useAuth();
   
   const queryClient = useQueryClient();
-
+  const selectedFileType = useEditorStore((state)=>state.fileType)
+  const selectedFileContent = useEditorStore(state=>state.latex)
   const projectId = params.id;
-  const [latex, setLatex] = useState("");
-  const [selectedFile, setSelectedFile] = useState<SelectedFile | null>({"type":"latex","content":""});
 
   if (!projectId) {
     return (
@@ -56,7 +56,7 @@ export default function ProjectPage() {
       });
 
       res.data.files.forEach((file:{id:string,filename:string,content:string,path:string})=>{
-          queryClient.setQueryData(['file',file.id],{
+          queryClient.setQueryData(['file',file.path],{
             type:'latex',
             content: file.content
           })
@@ -71,6 +71,7 @@ export default function ProjectPage() {
     queryFn:preFetchProject,
     staleTime:10*60*1000,
     refetchOnWindowFocus:false,
+    refetchOnMount:false
   })
 
   const { data, isLoading, error } = useQuery<Project>({
@@ -98,9 +99,9 @@ export default function ProjectPage() {
       <div className=" h-[calc(100vh-4rem)] w-screen flex flex-col">
         {/* <h1>{data.name}</h1> */}
         <div className="w-full flex-1 flex h-full">
-        <ProjectTree setSelectedFile={setSelectedFile}  setLatex={setLatex}/>
+        <ProjectTree />
         {
-          selectedFile?.type=="latex"?<EditorSection latex={latex} setLatex={setLatex} />:<PDFViewer url={selectedFile!.content} />
+          selectedFileType=="latex"?<EditorSection />:<PDFViewer url={selectedFileContent} />
         }
         
         <Chat />

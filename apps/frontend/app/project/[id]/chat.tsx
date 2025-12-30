@@ -7,6 +7,7 @@ import { ChatMessage } from "@/types/types";
 import { ChatView } from "./chatView";
 import axiosClient from "@/lib/axiosClient";
 import { useQuery } from "@tanstack/react-query";
+import { searchAndReplace } from "@/utils/tool_utils";
 
 export function Chat() {
     const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -97,6 +98,15 @@ function ChatBar({setMessages}:{setMessages:Dispatch<SetStateAction<ChatMessage[
               role: "model",
             };
             setMessages((prev) => [...prev, aiMessage]);
+
+            const parsedContent=JSON.parse(data.content)
+
+            if(parsedContent.type=="tool_call" && parsedContent.name === "search_replace")
+            {
+
+              const args = parsedContent.args;
+              searchAndReplace(args.old_string,args.new_string,args.file_path)
+            }
           }
           if (data.sender === "tools") {
             const aiMessage: ChatMessage = {

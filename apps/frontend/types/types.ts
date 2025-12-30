@@ -17,6 +17,7 @@ export type FileTreeNode = {
     id: string;
     name: string;
     isFolder: boolean;
+    path?:string;
     fileType?: "source" | "knowledge_base";
     children?: FileTreeNode[];
   };
@@ -28,6 +29,8 @@ export type FileTreeNode = {
 
 
   export type SelectedFile ={
+    id:string,
     type : "latex" | "pdf",
+    path:string,
     content : string
   }

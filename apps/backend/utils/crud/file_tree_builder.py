@@ -45,6 +45,7 @@ def build_file_tree(files: List[File], project_id: str) -> List[Dict[str, Any]]:
                     "id": str(file.id),
                     "name": part,
                     "isFolder": False,
+                    "path":file.storage_path,
                     "fileType": file.file_type.value if hasattr(file.file_type, 'value') else str(file.file_type)
                 }
                 current_level.append(file_node)

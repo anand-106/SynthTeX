@@ -129,6 +129,9 @@ def get_all_source_files(project_id:UUID,auth_user=Depends(verify_clerk_user),db
         result = []
         for f in files:
             try:
+                if f.filename.endswith('.pdf'):
+                    print(f"{f.filename} skipped")
+                    continue
                 content = read_s3_bytes(f.storage_path).decode('utf-8')
                 result.append({
                     "id":str(f.id),

@@ -27,11 +27,14 @@ function AIMessage({message}:{message:ChatMessage}){
         </h1>
     </div>
 
-    if (mes_dict.type == 'tool_call') 
+    if (mes_dict.type == 'tool_call'){
+
+        console.log(mes_dict)
     return <div className=" px-2 py-4">
     <h1 className="break-all whitespace-pre-wrap text-sm">
         Tool Call: {mes_dict.name}
     </h1>
     </div>
+    } 
 }
   

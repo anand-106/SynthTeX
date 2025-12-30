@@ -1,5 +1,6 @@
 "use client";
 
+import { useEditorStore } from "@/stores/editorStore";
 import Editor, { BeforeMount } from "@monaco-editor/react";
 
 type Props = {
@@ -7,7 +8,10 @@ type Props = {
   onChange: (value: string) => void;
 };
 
-export default function LatexEditor({ value, onChange }: Props) {
+export default function LatexEditor() {
+
+  const latex = useEditorStore((state)=>state.latex)
+  const setLatex = useEditorStore((state)=>state.setLatex)
   
   const handleBeforeMount: BeforeMount = (monaco) => {
 
@@ -59,8 +63,8 @@ export default function LatexEditor({ value, onChange }: Props) {
     <Editor
       height="100%"
       defaultLanguage="latex"
-      value={value}
-      onChange={(v) => onChange(v ?? "")}
+      value={latex}
+      onChange={(v) => setLatex(v ?? "")}
       theme="latex-dark"
       beforeMount={handleBeforeMount}
       options={{

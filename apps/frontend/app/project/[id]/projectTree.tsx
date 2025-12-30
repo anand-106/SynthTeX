@@ -1,4 +1,5 @@
 import axiosClient from "@/lib/axiosClient";
+import { useEditorStore } from "@/stores/editorStore";
 import { FileTreeNode, FileTreeResponse, SelectedFile } from "@/types/types";
 import { useAuth } from "@clerk/nextjs";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -9,17 +10,19 @@ import { FaFolder } from "react-icons/fa";
 import { FaFolderOpen } from "react-icons/fa";
 import { FaFile } from "react-icons/fa";
 
-export function ProjectTree({setLatex,setSelectedFile}:{setLatex:React.Dispatch<React.SetStateAction<string>>,setSelectedFile:React.Dispatch<React.SetStateAction<SelectedFile|null>>}){
+export function ProjectTree(){
 
     const {getToken} = useAuth()
     const param = useParams()
     const queryClient = useQueryClient();
 
     const projectId = param.id
+    const {setLatex} = useEditorStore.getState()
+    const {setSelectedFile} = useEditorStore.getState()
 
     
 
-    const FetchFileContent = async (fileId:string,FileName:string) =>{
+    const FetchFileContent = async (fileId:string,FileName:string,path:string) =>{
         try{
             const token = await getToken();
             const isPDF = FileName.toLowerCase().endsWith('.pdf')
@@ -31,17 +34,14 @@ export function ProjectTree({setLatex,setSelectedFile}:{setLatex:React.Dispatch<
             
                 })
                 console.log("received presigned url",res.data.url)
-                setSelectedFile({
-                    "type":"pdf",
-                    "content":res.data.url
-                })
+                setSelectedFile(fileId,path,res.data.url,"pdf")
             }
             else{
 
-                const cached = queryClient.getQueryData<SelectedFile>(['file',fileId])
+                const cached = queryClient.getQueryData<SelectedFile>(['file',path])
 
                 if(cached){
-                    setSelectedFile(cached)
+                    setSelectedFile(fileId,path,cached.content,"latex")
                     setLatex(cached.content)
                 }
                 else{
@@ -52,11 +52,13 @@ export function ProjectTree({setLatex,setSelectedFile}:{setLatex:React.Dispatch<
                     })
                     const data =  {
                         "type":"latex" as const,
-                        "content":res.data.content
+                        "content":res.data.content,
+                        "path":path
                     }
-                    queryClient.setQueryData(['file',fileId],data)
-                    setSelectedFile(data)
+                    queryClient.setQueryData(['file',path],data)
+                    setSelectedFile(fileId,path,res.data.content,"latex")
                     setLatex(res.data.content)
+
 
 
                 }
@@ -110,7 +112,7 @@ export function ProjectTree({setLatex,setSelectedFile}:{setLatex:React.Dispatch<
     </div>
 }
 
-function Node({node,style,onFileClick}:{node:NodeApi<FileTreeNode>,style:CSSProperties,onFileClick:(id:string,FileName:string)=>Promise<void>}){
+function Node({node,style,onFileClick}:{node:NodeApi<FileTreeNode>,style:CSSProperties,onFileClick:(id:string,FileName:string,path:string)=>Promise<void>}){
     const isFolder = node.data.isFolder
     return <div style={style}>
         {
@@ -130,14 +132,14 @@ function Folder({node}:{node:NodeApi<FileTreeNode>}){
     </div>
 }
 
-function File({node,onFileClick}:{node:NodeApi<FileTreeNode>,onFileClick:(id:string,fileName:string)=>void}){
+function File({node,onFileClick}:{node:NodeApi<FileTreeNode>,onFileClick:(id:string,fileName:string,path:string)=>void}){
 
 
 
 
     return <div className="flex gap-2 items-center  cursor-pointer"
     onClick={()=>{
-        onFileClick(node.data.id,node.data.name)
+        onFileClick(node.data.id,node.data.name,node.data.path!)
     }}
     >
         <FaFile size={15} /> 

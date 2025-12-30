@@ -183,6 +183,10 @@ def get_file_content(file_path: str, runtime: Annotated[ToolRuntime[AgentContext
         print(f"Error reading file {file_path}: {e}")
         return f"Error reading file: {str(e)}"
 
+def normalize_latex_string(s: str) -> str:
+    s = s.replace("\\'", "'") 
+    s = s.replace("\\\\", "\\")
+    return s
 
 @tool
 def search_replace(file_path: str, old_string: str, new_string: str, runtime: Annotated[ToolRuntime[AgentContext], InjectedToolArg]):
@@ -233,6 +237,9 @@ def search_replace(file_path: str, old_string: str, new_string: str, runtime: An
     print(f"search_replace tool accessed for file {file_path}")
 
     try:
+
+        old_string = normalize_latex_string(old_string)
+        new_string = normalize_latex_string(new_string)
 
         data = read_s3_bytes(file_path)
         content = data.decode("utf-8")

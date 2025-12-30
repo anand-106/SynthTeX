@@ -3,10 +3,10 @@ import LatexEditor from "./latexEditor";
 
 
 
-export function EditorSection({latex,setLatex}:{latex:string,setLatex:React.Dispatch<React.SetStateAction<string>>}){
+export function EditorSection(){
     
     return <div className="h-full flex-1">
         <ActionBar/>
-        <LatexEditor value={latex} onChange={setLatex} />
+        <LatexEditor />
     </div>
 }
