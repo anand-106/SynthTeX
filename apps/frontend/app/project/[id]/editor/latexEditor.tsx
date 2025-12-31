@@ -8,9 +8,9 @@ type Props = {
   onChange: (value: string) => void;
 };
 
-export default function LatexEditor() {
+export default function LatexEditor({latex}:{latex:string}) {
 
-  const latex = useEditorStore((state)=>state.latex)
+  
   const setLatex = useEditorStore((state)=>state.setLatex)
   
   const handleBeforeMount: BeforeMount = (monaco) => {

@@ -28,7 +28,8 @@ def create_project(project:ProjectModel,auth_user=Depends(verify_clerk_user),db:
     db.refresh(project_row)
 
     return {
-        "message":"Project Created Successfully"
+        "message": "Project Created Successfully",
+        "project_id": str(project_row.id)
     }
 
 @crud_router.get('/projects',response_model=List[ProjectsOut])
@@ -169,6 +170,7 @@ async def compile_latex_project(request:CompileIn,auth_user=Depends(verify_clerk
     await latex_compiler.enqueue_job("latex_job_compiler",{     
                                                                 "job_id":str(compile_row.id),
                                                                 "project_id":request.project_id,
+                                                                "user_id":auth_user["clerk_user_id"],
                                                                 "files":files
                                                             })
     

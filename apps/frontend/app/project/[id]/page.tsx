@@ -5,7 +5,7 @@ import { useAuth } from "@clerk/nextjs";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
 import { Chat } from "./chat";
-import { EditorSection } from "./editor";
+import { EditorSection } from "./editor/editor";
 import { Project, SelectedFile } from "@/types/types";
 import { ProjectTree } from "./projectTree";
 import { useState } from "react";
@@ -14,7 +14,7 @@ import { useEditorStore } from "@/stores/editorStore";
 
 
 const PDFViewer = dynamic(
-  () => import('./pdfView').then(mod => mod.PDFViewer),
+  () => import('./editor/pdfView').then(mod => mod.PDFViewer),
   { ssr: false }
 );
 

@@ -7,19 +7,28 @@ import {
   SignedOut,
   UserButton,
 } from '@clerk/nextjs'
-import { Geist, Geist_Mono } from 'next/font/google'
+import { Inter, JetBrains_Mono, Google_Sans } from 'next/font/google'
 import './globals.css'
 import Providers from './providers'
 
-const geistSans = Geist({
-  variable: '--font-geist-sans',
-  subsets: ['latin'],
-})
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter",
+  display: "swap",
+});
 
-const geistMono = Geist_Mono({
-  variable: '--font-geist-mono',
-  subsets: ['latin'],
-})
+const jetBrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  variable: "--font-jetbrains-mono",
+  display: "swap",
+});
+
+const gSans = Google_Sans({
+  subsets: ["latin"],
+  variable: "--font-gsans",
+  display: "swap",
+});
+
 
 export const metadata: Metadata = {
   title: 'Clerk Next.js Quickstart',
@@ -34,10 +43,11 @@ export default function RootLayout({
   return (
     <ClerkProvider>
       <html lang="en">
-        <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+        <body className={`${inter.variable} ${jetBrainsMono.variable} ${gSans.variable} antialiased`}>
           <Providers>
 
-          <header className="flex justify-end items-center p-4 gap-4 h-16">
+          <header className="flex justify-between items-center p-4 gap-4 h-16">
+            <h1 className='font-bold text-2xl font-gsans'>SynthTex</h1>
             <SignedOut>
               <SignInButton />
               <SignUpButton>

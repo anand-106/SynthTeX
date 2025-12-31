@@ -2,7 +2,7 @@
 
 import * as Dialog from "@radix-ui/react-dialog";
 import { useState } from "react";
-import { FaRegPlusSquare } from "react-icons/fa";
+import { IoIosAddCircle } from "react-icons/io";
 
 export default function CreateProjectModal({
   onCreate,
@@ -22,9 +22,12 @@ export default function CreateProjectModal({
   return (
     <Dialog.Root>
       <Dialog.Trigger asChild>
-        <button className="h-[100px] w-[100px] cursor-pointer flex items-center justify-center text-white">
-          <FaRegPlusSquare size={24} />
+      <div className="h-[150px] w-[250px] flex flex-col justify-center items-center bg-linear-to-tl from-white/20 to-transparent font-gsans p-4 rounded-2xl border border-white/15 cursor-pointer">
+
+        <button className="cursor-pointer">
+          <IoIosAddCircle size={35} />
         </button>
+        </div>
       </Dialog.Trigger>
 
       <Dialog.Portal>

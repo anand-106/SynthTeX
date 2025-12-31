@@ -1,7 +1,6 @@
 
 import os
-from pprint import pprint
-from e2b import Sandbox
+from utils.e2b import get_sandbox
 from db.models import CompilationJob, CompileStatus, File, FileType
 from db.db import SessionLocal
 from s3 import upload_bytes
@@ -14,20 +13,20 @@ S3_ENV_PREFIX = os.getenv("S3_ENV_PREFIX")
 
 async def latex_job_compiler(ctx,job_data):
 
-    sandbox = Sandbox.create(template="latex-compiler")
 
     entry_file = "main"
 
     project_id = job_data.get("project_id","")
     job_id = job_data.get("job_id","")
-
+    user_id = job_data.get("user_id","")
     files = job_data.get("files",[])
 
-    copy_project_to_e2b(files=files,sandbox=sandbox)
+    sandbox = get_sandbox(user_id=user_id)
+    copy_project_to_e2b(files=files,sandbox=sandbox,project_id=project_id)
 
     try:
         result = sandbox.commands.run(
-            cwd='/home/user',
+            cwd=f'/home/user/{project_id}',
             cmd=(
                 "latexmk -pdf "
                 "-interaction=nonstopmode "
@@ -36,14 +35,14 @@ async def latex_job_compiler(ctx,job_data):
                 "-outdir=output "
                 f"{entry_file}.tex"
             ),
-            timeout=60,
+            timeout=0,
         )
     except Exception as e:
         print(f"Compilation had errors: {e}")
 
     key = f"{S3_ENV_PREFIX}/projects/{project_id}/files/output/{entry_file}.pdf"
 
-    content = sandbox.files.read(path=f"/home/user/output/{entry_file}.pdf",format="bytes")
+    content = sandbox.files.read(path=f"/home/user/{project_id}/output/{entry_file}.pdf",format="bytes")
 
     upload_bytes(key=key,content=content,content_type="application/pdf")
 

@@ -17,8 +17,8 @@ export function ProjectTree(){
     const queryClient = useQueryClient();
 
     const projectId = param.id
-    const {setLatex} = useEditorStore.getState()
-    const {setSelectedFile} = useEditorStore.getState()
+    const {setLatex,setSelectedFile,setActiveEditorTab} = useEditorStore.getState()
+    
 
     
 
@@ -43,6 +43,7 @@ export function ProjectTree(){
                 if(cached){
                     setSelectedFile(fileId,path,cached.content,"latex")
                     setLatex(cached.content)
+                    setActiveEditorTab("latex")
                 }
                 else{
                     const res = await axiosClient.get(`/file/${fileId}`,{
@@ -58,7 +59,7 @@ export function ProjectTree(){
                     queryClient.setQueryData(['file',path],data)
                     setSelectedFile(fileId,path,res.data.content,"latex")
                     setLatex(res.data.content)
-
+                    setActiveEditorTab("latex")
 
 
                 }

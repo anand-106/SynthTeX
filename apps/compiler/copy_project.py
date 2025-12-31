@@ -11,13 +11,13 @@ def extract_relative_path(path: str) -> str:
         raise ValueError("Invalid storage path: missing '/files/'")
     return path.split(marker, 1)[1]
 
-def copy_project_to_e2b(files,sandbox:Sandbox):
+def copy_project_to_e2b(files,sandbox:Sandbox,project_id:str):
 
     for f in files:
 
         content = read_s3_bytes(f["path"])
 
-        local_path = extract_relative_path(f["path"])
+        local_path = f"/home/user/{project_id}/"+extract_relative_path(f["path"])
 
         path = Path(local_path)
         if path.parent != Path("."):
