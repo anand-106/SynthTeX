@@ -1,9 +1,20 @@
+"use client"
+
 import { ChatMessage } from "@/types/types";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { components } from "./markdown/markdownComponents";
+import { useEffect, useRef } from "react";
 
 export function ChatView({ messages }: { messages: ChatMessage[] }) {
+
+  const messageEndRef = useRef<HTMLDivElement>(null)
+
+  useEffect(()=>{
+    messageEndRef.current?.scrollIntoView({behavior:"smooth"})
+  }
+  ,[messages])
+
   return (
     <div className="flex flex-col">
       {messages.map((mes) => {
@@ -13,6 +24,7 @@ export function ChatView({ messages }: { messages: ChatMessage[] }) {
           <AIMessage key={mes.id} message={mes} />
         );
       })}
+      <div ref={messageEndRef} />
     </div>
   );
 }
@@ -33,11 +45,11 @@ function AIMessage({ message }: { message: ChatMessage }) {
     if (mes_dict.type == "text")
       return (
         <div className=" px-2 py-4">
-          <h1 className="break-all whitespace-pre-wrap text-sm">
+          <div className="break-all whitespace-pre-wrap text-sm">
             <Markdown remarkPlugins={[remarkGfm]} components={components}>
               {mes_dict.text}
             </Markdown>
-          </h1>
+          </div>
         </div>
       );
 
@@ -114,5 +126,6 @@ function AIMessage({ message }: { message: ChatMessage }) {
         }
       }
     }
+    return null
   }
 }
