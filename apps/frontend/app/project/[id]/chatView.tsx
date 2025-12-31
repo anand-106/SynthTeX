@@ -1,4 +1,7 @@
 import { ChatMessage } from "@/types/types";
+import Markdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import { components } from "./markdown/markdownComponents";
 
 export function ChatView({ messages }: { messages: ChatMessage[] }) {
   return (
@@ -31,7 +34,9 @@ function AIMessage({ message }: { message: ChatMessage }) {
       return (
         <div className=" px-2 py-4">
           <h1 className="break-all whitespace-pre-wrap text-sm">
-            {mes_dict.text}
+            <Markdown remarkPlugins={[remarkGfm]} components={components}>
+              {mes_dict.text}
+            </Markdown>
           </h1>
         </div>
       );
@@ -81,5 +86,33 @@ function AIMessage({ message }: { message: ChatMessage }) {
       }
     }
   } else {
+    console.log(mes_dict)
+    if(mes_dict.type=="text"){
+      const mesContent = JSON.parse(mes_dict.text)
+      switch(mesContent.tool_name){
+        case "create_file":{
+          return <div className="px-2 py-4">
+          <h1 className="break-all whitespace-pre-wrap text-sm">
+            {mesContent.status} {mesContent.path}
+          </h1>
+        </div>
+        }
+        case "list_files":{
+          const files = mesContent.files
+          if(Array.isArray(files) && files.length > 0){
+
+          return <div className="px-2 py-4">
+          <div className="break-all whitespace-pre-wrap text-sm">
+            {
+              files.map((f,idx)=>{
+                return <h1 key={idx}>{f.file_name}</h1>
+              })
+            }
+          </div>
+        </div>
+          }
+        }
+      }
+    }
   }
 }
