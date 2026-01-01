@@ -55,12 +55,14 @@ export default function LatexEditor({latex}:{latex:string}) {
         { token: "comment", foreground: "6A9955" },
         { token: "string", foreground: "CE9178" },
       ],
-      colors: {},
+      colors: {
+        "editor.background": "#151515"
+      },
     });
   };
 
   return (
-    <div className="h-[calc(100vh-89px)]">
+    <div className="h-full">
 
     <Editor
       height="100%"

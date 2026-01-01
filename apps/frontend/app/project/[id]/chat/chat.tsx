@@ -43,7 +43,7 @@ export function Chat() {
   if (isLoading) return <div><h1>Loading...</h1></div>
   if (error) return <div><h1>Error getting data sources.</h1></div>
   return (
-    <div className="w-[400px] h-full border-l border-white/50 flex flex-col overflow-hidden">
+    <div className="w-[400px] h-full border-l bg-[#151515] shrink-0 border-white/20 flex flex-col overflow-hidden">
       <div className="w-full flex-1 overflow-y-auto scrollbar-none">
         <ChatView messages={messages} />
       </div>

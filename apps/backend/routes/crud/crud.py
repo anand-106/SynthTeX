@@ -179,4 +179,14 @@ async def compile_latex_project(request:CompileIn,auth_user=Depends(verify_clerk
         "status":compile_row.status.value
     }
     
+@crud_router.get('/compile/{compile_id}/status')
+def get_compile_status(compile_id:UUID,auth_user=Depends(verify_clerk_user),db:Session=Depends(get_db)):
 
+    compile_job = db.query(CompilationJob).filter(CompilationJob.id==compile_id).first()
+
+    if not compile_job:
+        raise HTTPException(404,"Comile job not found")
+
+    return {
+        "status":compile_job.status
+    }

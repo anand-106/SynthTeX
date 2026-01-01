@@ -4,13 +4,14 @@ import axiosClient from "@/lib/axiosClient";
 import { useAuth } from "@clerk/nextjs";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
-import { Chat } from "./chat";
+import { Chat } from "./chat/chat";
 import { EditorSection } from "./editor/editor";
 import { Project, SelectedFile } from "@/types/types";
 import { ProjectTree } from "./projectTree";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import { useEditorStore } from "@/stores/editorStore";
+import { useLayoutStore } from "@/stores/layoutStore";
 
 
 const PDFViewer = dynamic(
@@ -28,6 +29,12 @@ export default function ProjectPage() {
   const selectedFileType = useEditorStore((state)=>state.fileType)
   const selectedFileContent = useEditorStore(state=>state.latex)
   const projectId = params.id;
+
+  const {setBgColor} = useLayoutStore.getState()
+  useEffect(()=>{
+setBgColor("#151515")
+
+  },[setBgColor])
 
   if (!projectId) {
     return (
@@ -96,7 +103,7 @@ export default function ProjectPage() {
     );
   if (data && projectLoad.data)
     return (
-      <div className=" h-[calc(100vh-4rem)] w-screen flex flex-col">
+      <div className=" h-[calc(100vh-4rem)] w-screen flex flex-col border-t border-white/20 ">
         {/* <h1>{data.name}</h1> */}
         <div className="w-full flex-1 flex h-full">
         <ProjectTree />

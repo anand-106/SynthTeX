@@ -5,10 +5,10 @@ import { useAuth } from "@clerk/nextjs";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
 import { CSSProperties } from "react";
-import { Tree,NodeRendererProps, NodeApi } from "react-arborist";
-import { FaFolder } from "react-icons/fa";
-import { FaFolderOpen } from "react-icons/fa";
-import { FaFile } from "react-icons/fa";
+import { Tree, NodeApi } from "react-arborist";
+import { FaRegFolder } from "react-icons/fa";
+import { FaRegFolderOpen } from "react-icons/fa";
+import { FaRegFile } from "react-icons/fa";
 
 export function ProjectTree(){
 
@@ -101,11 +101,14 @@ export function ProjectTree(){
     if (isLoading) return <div className=" h-full w-[200px]"><h1>Loading...</h1></div>
     if (error) return <div className=" h-full w-[200px]"><h1>Error getting data sources.</h1></div>
 
-    return <div className=" h-full w-[250px] border-r border-white/20 px-4">
+    return <div className=" h-full w-[290px] shrink-0 bg-[#151515] border-r border-white/20 px-4">
         <Tree initialData={data?.tree}
         width={250}
-        indent={16}
-        rowHeight={28}
+        openByDefault={false}
+        indent={24}
+        rowHeight={36}
+        overscanCount={1}
+        paddingTop={20}
 
         >
         {(props)=><Node {...props} onFileClick={FetchFileContent} />}
@@ -127,7 +130,7 @@ function Folder({node}:{node:NodeApi<FileTreeNode>}){
     onClick={()=>node.toggle()}
     >{
 
-        node.isOpen?<FaFolderOpen/>:<FaFolder /> 
+        node.isOpen?<FaRegFolderOpen size={18}/>:<FaRegFolder size={18} /> 
     }
         <h1>{node.data.name}</h1>
     </div>
@@ -136,14 +139,14 @@ function Folder({node}:{node:NodeApi<FileTreeNode>}){
 function File({node,onFileClick}:{node:NodeApi<FileTreeNode>,onFileClick:(id:string,fileName:string,path:string)=>void}){
 
 
+    const selectedFileId = useEditorStore(state=>state.selectedFileId)
 
-
-    return <div className="flex gap-2 items-center  cursor-pointer"
+    return <div className={`flex gap-2 items-center rounded-lg px-2 py-1 cursor-pointer ${selectedFileId===node.data.id? "bg-white/10":""}`}
     onClick={()=>{
         onFileClick(node.data.id,node.data.name,node.data.path!)
     }}
     >
-        <FaFile size={15} /> 
+        <FaRegFile size={18} /> 
         <h1>{node.data.name}</h1>
     </div>
 }

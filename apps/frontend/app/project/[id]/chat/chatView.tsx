@@ -3,7 +3,7 @@
 import { ChatMessage } from "@/types/types";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { components } from "./markdown/markdownComponents";
+import { components } from "../markdown/markdownComponents";
 import { useEffect, useRef } from "react";
 
 export function ChatView({ messages }: { messages: ChatMessage[] }) {
@@ -59,7 +59,7 @@ function AIMessage({ message }: { message: ChatMessage }) {
           const fileName = mes_dict.args.file_path.split("/").pop();
 
           return (
-            <div className="px-2 py-4">
+            <div className="px-2 py-4 text-white/70">
               <h1 className="break-all whitespace-pre-wrap text-sm">
                 Reading {fileName}
               </h1>
@@ -70,7 +70,7 @@ function AIMessage({ message }: { message: ChatMessage }) {
           const fileName = mes_dict.args.file_path.split("/").pop();
 
           return (
-            <div className="px-2 py-4">
+            <div className="px-2 py-4 text-white/70">
               <h1 className="break-all whitespace-pre-wrap text-sm">
                 Updating {fileName}
               </h1>
@@ -79,7 +79,7 @@ function AIMessage({ message }: { message: ChatMessage }) {
         }
         case "list_files": {
           return (
-            <div className="px-2 py-4">
+            <div className="px-2 py-4 text-white/70">
               <h1 className="break-all whitespace-pre-wrap text-sm">
                 Listing files...
               </h1>
@@ -89,7 +89,7 @@ function AIMessage({ message }: { message: ChatMessage }) {
         case "create_file":
             const fileName = mes_dict.args.relative_path;
             return (
-                <div className="px-2 py-4">
+                <div className="px-2 py-4 text-white/70">
                   <h1 className="break-all whitespace-pre-wrap text-sm">
                     Creating file: {fileName}
                   </h1>
@@ -103,7 +103,7 @@ function AIMessage({ message }: { message: ChatMessage }) {
       const mesContent = JSON.parse(mes_dict.text)
       switch(mesContent.tool_name){
         case "create_file":{
-          return <div className="px-2 py-4">
+          return <div className="px-2 py-4 text-white/70">
           <h1 className="break-all whitespace-pre-wrap text-sm">
             {mesContent.status} {mesContent.path}
           </h1>
@@ -113,7 +113,7 @@ function AIMessage({ message }: { message: ChatMessage }) {
           const files = mesContent.files
           if(Array.isArray(files) && files.length > 0){
 
-          return <div className="px-2 py-4">
+          return <div className="px-2 py-4 text-white/70">
           <div className="break-all whitespace-pre-wrap text-sm">
             {
               files.map((f,idx)=>{

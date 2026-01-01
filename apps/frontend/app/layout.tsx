@@ -1,15 +1,10 @@
 import { type Metadata } from 'next'
-import {
-  ClerkProvider,
-  SignInButton,
-  SignUpButton,
-  SignedIn,
-  SignedOut,
-  UserButton,
-} from '@clerk/nextjs'
+import { ClerkProvider } from '@clerk/nextjs'
 import { Inter, JetBrains_Mono, Google_Sans } from 'next/font/google'
 import './globals.css'
 import Providers from './providers'
+import { BodyWrapper } from './bodyWrapper'
+import { HeaderWrapper } from './headerWrapper'
 
 const inter = Inter({
   subsets: ["latin"],
@@ -43,26 +38,12 @@ export default function RootLayout({
   return (
     <ClerkProvider>
       <html lang="en">
-        <body className={`${inter.variable} ${jetBrainsMono.variable} ${gSans.variable} antialiased`}>
+        <BodyWrapper className={`${inter.variable} ${jetBrainsMono.variable} ${gSans.variable} antialiased`}>
           <Providers>
-
-          <header className="flex justify-between items-center p-4 gap-4 h-16">
-            <h1 className='font-bold text-2xl font-gsans'>SynthTex</h1>
-            <SignedOut>
-              <SignInButton />
-              <SignUpButton>
-                <button className="bg-[#6c47ff] text-ceramic-white rounded-full font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 cursor-pointer">
-                  Sign Up
-                </button>
-              </SignUpButton>
-            </SignedOut>
-            <SignedIn>
-              <UserButton />
-            </SignedIn>
-          </header>
-          {children}
+            <HeaderWrapper />
+            {children}
           </Providers>
-        </body>
+        </BodyWrapper>
       </html>
     </ClerkProvider>
   )
