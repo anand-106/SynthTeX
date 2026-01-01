@@ -6,7 +6,7 @@ export interface Project {
 }
 
 export type ChatMessage = {
-    id:number | null,
+    id:string | null,
     project_id:string,
     content:string,
     created_at:string | null,

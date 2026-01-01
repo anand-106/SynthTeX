@@ -6,13 +6,13 @@ import { useParams } from "next/navigation";
 import { ChatMessage } from "@/types/types";
 import { ChatView } from "./chatView";
 import axiosClient from "@/lib/axiosClient";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { searchAndReplace } from "@/utils/tool_utils";
 
 export function Chat() {
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const param = useParams()
-
+    
     const project_id = param.id
     const {getToken} = useAuth()
 
@@ -44,7 +44,7 @@ export function Chat() {
   if (error) return <div><h1>Error getting data sources.</h1></div>
   return (
     <div className="w-[400px] h-full border-l border-white/50 flex flex-col overflow-hidden">
-      <div className="w-full flex-1 overflow-y-auto">
+      <div className="w-full flex-1 overflow-y-auto scrollbar-none">
         <ChatView messages={messages} />
       </div>
 
@@ -60,6 +60,7 @@ export function Chat() {
 function ChatBar({setMessages}:{setMessages:Dispatch<SetStateAction<ChatMessage[]>>}) {
 
     const [userMessage, setUserMessage] = useState("");
+    const queryClient = useQueryClient();
 
   const [socket, setSocket] = useState<WebSocket | null>(null);
   const socketRef = useRef<WebSocket | null>(null);
@@ -91,7 +92,7 @@ function ChatBar({setMessages}:{setMessages:Dispatch<SetStateAction<ChatMessage[
 
           if (data.sender === "model") {
             const aiMessage: ChatMessage = {
-              id: Date.now(),
+              id: crypto.randomUUID(),
               project_id:data.project_id,
               created_at:data.created_at,
               content: data.content,
@@ -105,12 +106,14 @@ function ChatBar({setMessages}:{setMessages:Dispatch<SetStateAction<ChatMessage[
             {
 
               const args = parsedContent.args;
-              searchAndReplace(args.old_string,args.new_string,args.file_path)
+              const replaceText = searchAndReplace(args.old_string,args.new_string,args.file_path)
+              queryClient.setQueryData(['file',args.file_path],replaceText)
+
             }
           }
           if (data.sender === "tools") {
             const aiMessage: ChatMessage = {
-              id: Date.now(),
+              id: crypto.randomUUID(),
               project_id:data.project_id,
               created_at:data.created_at,
               content: data.content,

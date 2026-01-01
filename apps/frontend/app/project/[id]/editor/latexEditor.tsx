@@ -60,6 +60,8 @@ export default function LatexEditor({latex}:{latex:string}) {
   };
 
   return (
+    <div className="h-[calc(100vh-89px)]">
+
     <Editor
       height="100%"
       defaultLanguage="latex"
@@ -76,6 +78,7 @@ export default function LatexEditor({latex}:{latex:string}) {
         automaticLayout: true,
         tabSize: 2,
       }}
-    />
+      />
+      </div>
   );
 }
