@@ -64,8 +64,9 @@ setBgColor("#151515")
 
       res.data.files.forEach((file:{id:string,filename:string,content:string,path:string})=>{
           queryClient.setQueryData(['file',file.path],{
-            type:'latex',
-            content: file.content
+            type:'latex' as const,
+            content: file.content,
+            path:file.path
           })
       })
 
@@ -91,8 +92,8 @@ setBgColor("#151515")
 
   if (isLoading || projectLoad.isLoading)
     return (
-      <div>
-        <h1>Loading...</h1>
+      <div className="flex justify-center w-screen pt-[300px]">
+        <h1 className="text-white/70">Loading...</h1>
       </div>
     );
   if (error || projectLoad.error)

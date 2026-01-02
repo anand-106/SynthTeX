@@ -106,8 +106,12 @@ function ChatBar({setMessages}:{setMessages:Dispatch<SetStateAction<ChatMessage[
             {
 
               const args = parsedContent.args;
-              const replaceText = searchAndReplace(args.old_string,args.new_string,args.file_path)
-              queryClient.setQueryData(['file',args.file_path],replaceText)
+              const replaceText = searchAndReplace(args.old_string,args.new_string,args.file_path,queryClient)
+              queryClient.setQueryData(['file',args.file_path],{
+                type:"latex" as const,
+                content: replaceText,
+                path: args.file_path
+              })
 
             }
           }
@@ -177,7 +181,7 @@ function ChatBar({setMessages}:{setMessages:Dispatch<SetStateAction<ChatMessage[
     }
 
     const msg: ChatMessage = {
-        id:null,
+        id:crypto.randomUUID(),
         project_id:projectId!.toString(),
       content: userMessage,
       created_at:null,

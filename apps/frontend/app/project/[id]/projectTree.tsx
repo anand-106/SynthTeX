@@ -35,6 +35,7 @@ export function ProjectTree(){
                 })
                 console.log("received presigned url",res.data.url)
                 setSelectedFile(fileId,path,res.data.url,"pdf")
+
             }
             else{
 

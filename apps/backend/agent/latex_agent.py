@@ -81,6 +81,7 @@ async def latex_agent(
             4. The "main.tex" file should contain the \\documentclass and \\begin{document}...\\end{document} structure.
             5. Additional content (chapters, sections, packages) can be in separate .tex files and included via \\input{} or \\include{}.
             6. If a user requests a different name for the main file, politely explain that "main.tex" is required as the compilation entry point and offer to use their preferred name as an included file instead.
+            7. FILE LINKING RULE (CRITICAL): When creating a new .tex file (other than main.tex), you MUST also update main.tex (or the appropriate parent file) to include it using \\input{filename} or \\include{filename}. A new .tex file that is not linked will NOT appear in the compiled PDF. Always add the include/input statement in the correct location within the document structure.
 
             LATEX SYNTAX RULES:
             - NEVER use Unicode subscript/superscript characters (₂, ³, etc.) - they don't work with pdflatex
@@ -90,14 +91,41 @@ async def latex_agent(
             - All chemical formulas should be in math mode: $H_2O$, $CO_2$, $O_2$
             - For text subscripts outside math, use \\textsubscript{2}
             - Always use ASCII characters when possible
+            - ESCAPE SPECIAL CHARACTERS (CRITICAL): LaTeX has reserved characters that must be escaped:
+              * Use \\& for & (ampersand) - e.g., "W. W. Norton \\& Company"
+              * Use \\% for % (percent)
+              * Use \\$ for $ (dollar sign) in text
+              * Use \\# for # (hash)
+              * Use \\_ for _ (underscore) in text
+              * Use \\{ and \\} for literal braces
+            - In bibliography/references, company names often contain & which MUST be escaped as \\&
 
             LATEX PACKAGE RULES:
-            - Always include commonly needed packages in main.tex:
-            - \\usepackage{amsmath} for math equations
-            - \\usepackage{graphicx} for images
-            - \\usepackage[utf8]{inputenc} for UTF-8 support
-            - When writing math formulas that use arrows (\\xrightarrow, \\xleftarrow), 
-            ensure amsmath is loaded.
+            - Always include commonly needed packages in main.tex preamble (before \\begin{document}):
+              * \\usepackage[utf8]{inputenc} for UTF-8 support
+              * \\usepackage{amsmath} for math equations
+              * \\usepackage{graphicx} for images
+              * \\usepackage[breaklinks=true]{hyperref} for clickable links (MUST include breaklinks=true)
+              * \\usepackage{geometry} for page margins
+              * \\usepackage{xurl} for better URL line breaking
+              * \\usepackage{microtype} for micro-typographic improvements
+            - Add \\sloppy after \\begin{document} to avoid overfull hbox warnings
+            - When writing math formulas that use arrows (\\xrightarrow, \\xleftarrow), ensure amsmath is loaded.
+            
+            TABLE OF CONTENTS RULES (CRITICAL):
+            - ALWAYS wrap \\tableofcontents with raggedright to prevent red overflow boxes:
+              {\\raggedright
+              \\tableofcontents
+              }
+            - Add \\newpage after the table of contents
+            - Do NOT add duplicate \\sloppy commands - one after \\begin{document} is enough
+            
+            OVERFULL HBOX PREVENTION:
+            - Always use xurl and microtype packages to prevent text overflow issues
+            - The \\sloppy command relaxes line-breaking constraints to avoid red boxes
+            - NEVER use \\usepackage{hyperref} alone - ALWAYS use \\usepackage[breaklinks=true]{hyperref}
+            - For long URLs or references, xurl allows breaks at any character
+            - The {\\raggedright ... } wrapper is essential for table of contents
 
             CRITICAL: The project will be compiled starting from "main.tex". Any other structure will cause compilation to fail.
             """
@@ -139,12 +167,7 @@ async def latex_agent(
                     db.commit()
                     db.refresh(message_row)
 
-        print("Request ended")
-
-
-
-        
-        
+        print("Request ended")      
 
     except Exception as e:
         print(f"error happend {e}")

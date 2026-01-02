@@ -25,18 +25,31 @@ async def latex_job_compiler(ctx,job_data):
     copy_project_to_e2b(files=files,sandbox=sandbox,project_id=project_id)
 
     try:
-        result = sandbox.commands.run(
+        # Ensure output directory exists and is clean
+        sandbox.commands.run(
             cwd=f'/home/user/{project_id}',
-            cmd=(
-                "latexmk -pdf "
-                "-interaction=nonstopmode "
-                "-f "
-                "-file-line-error "
-                "-outdir=output "
-                f"{entry_file}.tex"
-            ),
-            timeout=0,
+            cmd="mkdir -p output && rm -rf output/*",
+            timeout=30,
         )
+
+        # Run pdflatex 3 times to resolve all references (TOC, citations, etc.)
+        for i in range(3):
+            try:
+                result = sandbox.commands.run(
+                    cwd=f'/home/user/{project_id}',
+                    cmd=(
+                        f"pdflatex "
+                        f"-interaction=nonstopmode "
+                        f"-file-line-error "
+                        f"-output-directory=output "
+                        f"{entry_file}.tex"
+                    ),
+                    timeout=120,
+                )
+                print(f"pdflatex pass {i+1} completed")
+            except Exception as pass_error:
+                print(f"pdflatex pass {i+1} completed with warnings/errors: {pass_error}")
+            
     except Exception as e:
         print(f"Compilation had errors: {e}")
 
@@ -52,6 +65,8 @@ async def latex_job_compiler(ctx,job_data):
         if compile_job:
             compile_job.pdf_path = key
             compile_job.status = CompileStatus.success
+
+            db.commit()
         
         file_row=db.query(File).filter(File.project_id==project_id,File.storage_path==key,File.file_type==FileType.source).first()
         if not file_row:
@@ -63,6 +78,7 @@ async def latex_job_compiler(ctx,job_data):
         else:
             print("db record already exists")
     finally:
+        
         db.close()
 
     
