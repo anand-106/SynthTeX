@@ -5,6 +5,8 @@ import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { components } from "../markdown/markdownComponents";
 import { useEffect, useRef } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { useParams } from "next/navigation";
 
 export function ChatView({ messages }: { messages: ChatMessage[] }) {
 
@@ -21,7 +23,7 @@ export function ChatView({ messages }: { messages: ChatMessage[] }) {
         return mes.role === "user" ? (
           <UserMessage key={mes.id} message={mes} />
         ) : (
-          <AIMessage key={mes.id} message={mes} />
+          <AIMessage key={mes.id} message={mes} allMessages={messages} />
         );
       })}
       <div ref={messageEndRef} />
@@ -37,10 +39,11 @@ function UserMessage({ message }: { message: ChatMessage }) {
   );
 }
 
-function AIMessage({ message }: { message: ChatMessage }) {
-  // console.log("Raw content:", message.content);
-  // console.log("Type of content:", typeof message.content);
+function AIMessage({ message, allMessages }: { message: ChatMessage; allMessages: ChatMessage[] }) {
+  const queryClient = useQueryClient()
   const mes_dict = JSON.parse(message.content);
+  const param = useParams()
+  const project_id = param.id;
   if (message.role == "model") {
     if (mes_dict.type == "text")
       return (
@@ -86,7 +89,7 @@ function AIMessage({ message }: { message: ChatMessage }) {
             </div>
           );
         }
-        case "create_file":
+        case "create_file": {
             const fileName = mes_dict.args.relative_path;
             return (
                 <div className="px-2 py-4 text-white/70">
@@ -95,6 +98,7 @@ function AIMessage({ message }: { message: ChatMessage }) {
                   </h1>
                 </div>
               );
+        }
       }
     }
   } else {
@@ -103,6 +107,33 @@ function AIMessage({ message }: { message: ChatMessage }) {
       const mesContent = JSON.parse(mes_dict.text)
       switch(mesContent.tool_name){
         case "create_file":{
+          queryClient.invalidateQueries({queryKey:[`Project_tree_${project_id}`]})
+
+          // Find the matching tool_call message to get the file content
+          const toolCallMessage = allMessages.find(m => 
+            m.role === "model" && 
+            JSON.parse(m.content).type === "tool_call" &&
+            JSON.parse(m.content).name === "create_file" &&
+            JSON.parse(m.content).args.relative_path === mesContent.path
+          )
+          
+          if(toolCallMessage && mesContent.s3_key){
+            try {
+              const toolCallContent = JSON.parse(toolCallMessage.content)
+              const fileContent = toolCallContent.args.content
+              
+              if(fileContent) {
+                queryClient.setQueryData(['file', mesContent.s3_key], {
+                  type:'latex' as const,
+                  content: fileContent,
+                  path: mesContent.s3_key
+                })
+              }
+            } catch (e) {
+              console.error('Error parsing tool_call content:', e)
+            }
+          }
+          
           return <div className="px-2 py-4 text-white/70">
           <h1 className="break-all whitespace-pre-wrap text-sm">
             {mesContent.status} {mesContent.path}

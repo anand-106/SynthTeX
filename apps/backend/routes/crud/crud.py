@@ -186,7 +186,11 @@ def get_compile_status(compile_id:UUID,auth_user=Depends(verify_clerk_user),db:S
 
     if not compile_job:
         raise HTTPException(404,"Comile job not found")
-
+    if compile_job.pdf_path:
+        return {
+        "status":compile_job.status,
+        "path":compile_job.pdf_path
+    }
     return {
         "status":compile_job.status
     }

@@ -34,3 +34,8 @@ export type FileTreeNode = {
     path:string,
     content : string
   }
+
+  export type JobData = {
+    "status" : "idle"|"queued"|"running"|"success"|"failed",
+    "path" : string | null
+  }

@@ -103,7 +103,7 @@ export function ProjectTree(){
     if (error) return <div className=" h-full w-[200px]"><h1>Error getting data sources.</h1></div>
 
     return <div className=" h-full w-[290px] shrink-0 bg-[#151515] border-r border-white/20 px-4">
-        <Tree initialData={data?.tree}
+        <Tree data={data?.tree}
         width={250}
         openByDefault={false}
         indent={24}
