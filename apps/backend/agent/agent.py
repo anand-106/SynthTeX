@@ -5,7 +5,7 @@ from langchain_groq import ChatGroq
 from dotenv import load_dotenv
 import os
 
-from agent.tools.fs_tools import create_file, list_files, get_file_content, search_replace
+from agent.tools.fs_tools import create_file, list_files, get_file_content, search_replace, delete_file
 
 load_dotenv()
 
@@ -29,7 +29,7 @@ class RepoAgent:
 
     def __init__(self,system_prompt:str) -> None:
         self.system_prompt = system_prompt
-        self.tools = [create_file, list_files, get_file_content, search_replace]
+        self.tools = [create_file, list_files, get_file_content, search_replace, delete_file]
         self.agent = self._create_agent()
         
     

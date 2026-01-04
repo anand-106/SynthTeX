@@ -7,6 +7,7 @@ import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { useParams } from "next/navigation"
 import { useEffect, useState } from "react";
 import { BsArrowRepeat } from "react-icons/bs";
+import { FaRegSave } from "react-icons/fa";
 
 
 export function ActionBar(){
@@ -74,10 +75,13 @@ export function ActionBar(){
     return (
         <div className="h-[45px] bg-[#151515] flex items-center justify-between border-b border-white/20 mb-[15px] px-4">
             <h1 className="font-semibold text-lg">{filename}</h1>
+            <div className="flex gap-4">
+            <SaveButton />
             <CompileButton 
                 compileStatus={getDisplayStatus()} 
                 onCompile={() => compileMutation.mutate()}
-            />
+                />
+                </div>
         </div>
     )
 }
@@ -99,11 +103,48 @@ function CompileButton({ compileStatus, onCompile }: {
     return (
         <button 
             disabled={isLoading} 
-            className={`${compileStatus === 'success' ? 'bg-green-400/50' : compileStatus === 'failed' ? 'bg-red-500' : 'bg-white/20'} rounded-full p-2 text-xs cursor-pointer flex justify-center items-center gap-1 disabled:cursor-not-allowed`}
+            className={`${compileStatus === 'success' ? 'bg-green-400/50' : compileStatus === 'failed' ? 'bg-red-500' : 'bg-white/10'} rounded-lg p-2 text-xs cursor-pointer flex justify-center items-center gap-1 disabled:cursor-not-allowed`}
             onClick={onCompile}
         >
             <h1 className="font-semibold text-sm">{CompileMsg[compileStatus]}</h1>
             <BsArrowRepeat size={18} className={isLoading ? 'animate-spin' : ''} />
         </button>
     )
+}
+
+function SaveButton(){
+
+    const {getToken} = useAuth()
+
+    const fileId = useEditorStore(state=>state.selectedFileId)
+    const content = useEditorStore(state=>state.latex)
+
+    const saveFile =async ()=>{
+        const token = await getToken()
+        const res = await axiosClient.put(`/file/${fileId}`,{
+            content:content
+        },{
+            headers:{
+                Authorization:`Bearer ${token}`
+            }
+        })
+
+        return res.data
+    }
+
+    const saveMutation = useMutation({
+        mutationFn:saveFile,
+
+    })
+
+    return <button
+    onClick={()=>saveMutation.mutate()}
+    disabled={saveMutation.isPending}
+    className={`cursor-pointer bg-white/10 rounded-lg flex gap-2 items-center justify-center disabled:cursor-not-allowed p-2`}
+    >
+        <h1 className="font-semibold text-sm">{
+            saveMutation.isPending?"Saving...":"Save"
+            }</h1>
+            <FaRegSave size={18} />
+    </button>
 }

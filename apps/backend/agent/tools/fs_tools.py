@@ -7,7 +7,7 @@ import json
 from agent.tools.tool_context import AgentContext
 from db.models import File
 from db.db import SessionLocal
-from utils.s3.uploader import read_s3_bytes, upload_bytes
+from utils.s3.uploader import read_s3_bytes, upload_bytes, delete_s3_key
 
 load_dotenv()
 
@@ -303,4 +303,94 @@ def search_replace(file_path: str, old_string: str, new_string: str, runtime: An
         return json.dumps({
             "status": "error",
             "message": f"Failed to update file: {str(e)}"
+        })
+
+
+@tool
+def delete_file(file_path: str, runtime: Annotated[ToolRuntime[AgentContext], InjectedToolArg]):
+    """
+    Delete a file from the current LaTeX project.
+
+    Use this tool to permanently remove files that are no longer needed.
+
+    Purpose:
+    - Remove obsolete or unwanted files from the project
+    - Clean up temporary or test files
+    - Remove files that are being replaced or refactored
+
+    Args:
+        file_path: The full storage path of the file to delete.
+                   This MUST be the 'path' value returned by list_files.
+                   Example: 'dev/projects/<project_id>/files/main.tex'
+
+    Rules:
+    - ALWAYS call list_files first to get the correct file path
+    - Do NOT guess or construct file paths manually
+    - The file_path must be an exact match from list_files output
+    - This operation is PERMANENT and cannot be undone
+    - Be careful not to delete critical files like main.tex
+
+    Returns:
+    - status: 'deleted' if successful
+    - path: the file path that was deleted
+    - tool_name: 'delete_file'
+
+    Error cases:
+    - 'not_found': file was not found in the database
+    - 'error': an unexpected error occurred during deletion
+
+    This tool does NOT:
+    - Create new files
+    - Modify existing files
+    - Restore deleted files
+    """
+    print(f"delete_file tool accessed for file {file_path}")
+
+    try:
+        db = SessionLocal()
+        
+    
+        file_record = db.query(File).filter(
+            File.storage_path == file_path,
+            File.project_id == runtime.context.project_id
+        ).first()
+        
+        if not file_record:
+            db.close()
+            return json.dumps({
+                "tool_name": "delete_file",
+                "status": "not_found",
+                "message": f"File not found at path: {file_path}. Use list_files to verify the correct path."
+            })
+        
+       
+        s3_deleted = delete_s3_key(file_path)
+        
+        if not s3_deleted:
+            db.close()
+            return json.dumps({
+                "tool_name": "delete_file",
+                "status": "error",
+                "message": f"Failed to delete file from storage: {file_path}"
+            })
+        
+      
+        db.delete(file_record)
+        db.commit()
+        db.close()
+        
+        print(f"Successfully deleted file {file_path}")
+        
+        return json.dumps({
+            "tool_name": "delete_file",
+            "status": "deleted",
+            "path": file_path
+        })
+        
+    except Exception as e:
+        print(f"Error deleting file {file_path}: {e}")
+        return json.dumps({
+            "tool_name": "delete_file",
+            "status": "error",
+            "message": f"Failed to delete file: {str(e)}"
         })

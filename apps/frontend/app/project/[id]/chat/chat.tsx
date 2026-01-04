@@ -10,35 +10,48 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { searchAndReplace } from "@/utils/tool_utils";
 
 export function Chat() {
-    const param = useParams()
-    const project_id = param.id
-    const {getToken} = useAuth()
+  const param = useParams();
+  const project_id = param.id;
+  const { getToken } = useAuth();
 
-    const get_messages = async ()=>{
-      try{
-        const token = await getToken()
-        const res = await axiosClient.get(`/chat/project/${project_id}`,{
-          headers:{
-            Authorization:`Bearer ${token}`
-          }
-        })
-        return res.data
-      }
-      catch(err){
-        console.error(err)
-      }
+  const get_messages = async () => {
+    try {
+      const token = await getToken();
+      const res = await axiosClient.get(`/chat/project/${project_id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      return res.data;
+    } catch (err) {
+      console.error(err);
     }
+  };
 
-    const {data: messages, isLoading, error} = useQuery<ChatMessage[]>({
-      queryKey:[`project_chat_${project_id}`],
-      queryFn: get_messages,
-      staleTime: 5*60*1000,
-      refetchOnWindowFocus:false,
-      refetchOnMount:false
-  })
+  const {
+    data: messages,
+    isLoading,
+    error,
+  } = useQuery<ChatMessage[]>({
+    queryKey: [`project_chat_${project_id}`],
+    queryFn: get_messages,
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+  });
 
-  if (isLoading) return <div><h1>Loading...</h1></div>
-  if (error) return <div><h1>Error getting data sources.</h1></div>
+  if (isLoading)
+    return (
+      <div>
+        <h1>Loading...</h1>
+      </div>
+    );
+  if (error)
+    return (
+      <div>
+        <h1>Error getting data sources.</h1>
+      </div>
+    );
   return (
     <div className="w-[400px] h-full border-l bg-[#151515] shrink-0 border-white/20 flex flex-col overflow-hidden">
       <div className="w-full flex-1 overflow-y-auto scrollbar-none">
@@ -52,14 +65,17 @@ export function Chat() {
   );
 }
 
-
 function ChatBar() {
-    const [userMessage, setUserMessage] = useState("");
-    const queryClient = useQueryClient();
+  const [userMessage, setUserMessage] = useState("");
+  const queryClient = useQueryClient();
 
   const [socket, setSocket] = useState<WebSocket | null>(null);
   const socketRef = useRef<WebSocket | null>(null);
   const retryRef = useRef(0);
+
+  const param = useParams()
+
+  const project_id = param.id;
 
   const { getToken } = useAuth();
 
@@ -71,7 +87,7 @@ function ChatBar() {
 
     const connectWS = async () => {
       const token = await getToken();
-    
+
       ws = new WebSocket(
         `ws://localhost:8000/ws/project/${projectId}?token=${encodeURIComponent(token || "")}`
       );
@@ -88,46 +104,64 @@ function ChatBar() {
           if (data.sender === "model") {
             const aiMessage: ChatMessage = {
               id: crypto.randomUUID(),
-              project_id:data.project_id,
-              created_at:data.created_at,
+              project_id: data.project_id,
+              created_at: data.created_at,
               content: data.content,
               role: "model",
             };
-            
-     
-            queryClient.setQueryData<ChatMessage[]>([`project_chat_${projectId}`], (oldMessages = []) => {
-              return [...oldMessages, aiMessage];
-            });
 
-            const parsedContent=JSON.parse(data.content)
+            queryClient.setQueryData<ChatMessage[]>(
+              [`project_chat_${projectId}`],
+              (oldMessages = []) => {
+                return [...oldMessages, aiMessage];
+              }
+            );
 
-            if(parsedContent.type=="tool_call" && parsedContent.name === "search_replace")
-            {
-        
-              const args = parsedContent.args;
-              const replaceText = searchAndReplace(args.old_string,args.new_string,args.file_path,queryClient)
-              queryClient.setQueryData(['file',args.file_path],{
-                type:"latex" as const,
-                content: replaceText,
-                path: args.file_path
-              })
+            const parsedContent = JSON.parse(data.content);
+
+            if (parsedContent.type == "tool_call") {
+              if (parsedContent.name === "search_replace") {
+                const args = parsedContent.args;
+                const replaceText = searchAndReplace(
+                  args.old_string,
+                  args.new_string,
+                  args.file_path,
+                  queryClient
+                );
+                queryClient.setQueryData(["file", args.file_path], {
+                  type: "latex" as const,
+                  content: replaceText,
+                  path: args.file_path,
+                });
+              }
+              
             }
           }
           if (data.sender === "tools") {
             const toolsMessage: ChatMessage = {
               id: crypto.randomUUID(),
-              project_id:data.project_id,
-              created_at:data.created_at,
+              project_id: data.project_id,
+              created_at: data.created_at,
               content: data.content,
               role: "tools",
             };
-            
-           
-            queryClient.setQueryData<ChatMessage[]>([`project_chat_${projectId}`], (oldMessages = []) => {
-              return [...oldMessages, toolsMessage];
-            });
-          } 
-          else {
+
+            queryClient.setQueryData<ChatMessage[]>(
+              [`project_chat_${projectId}`],
+              (oldMessages = []) => {
+                return [...oldMessages, toolsMessage];
+              }
+            );
+
+            const parsedContent = JSON.parse(data.content);
+
+            if(parsedContent.type=="text"){
+              const toolData = JSON.parse(parsedContent.text);
+              if(toolData.tool_name==="delete_file"){
+                queryClient.invalidateQueries({queryKey:[`Project_tree_${project_id}`]})
+              }
+            }
+          } else {
             console.log("from ws: ", data);
           }
         } catch {
@@ -177,12 +211,11 @@ function ChatBar() {
   const sendMessage = async () => {
     if (!userMessage.trim()) return;
 
-    if(!socketRef.current || socketRef.current.readyState !== WebSocket.OPEN){
+    if (!socketRef.current || socketRef.current.readyState !== WebSocket.OPEN) {
       console.error("WebSocket is not connected");
       return;
     }
 
-    
     const userMsg: ChatMessage = {
       id: crypto.randomUUID(),
       project_id: projectId!.toString(),
@@ -190,11 +223,14 @@ function ChatBar() {
       created_at: null,
       role: "user",
     };
-    
-    queryClient.setQueryData<ChatMessage[]>([`project_chat_${projectId}`], (oldMessages = []) => {
-      return [...oldMessages, userMsg];
-    });
-   
+
+    queryClient.setQueryData<ChatMessage[]>(
+      [`project_chat_${projectId}`],
+      (oldMessages = []) => {
+        return [...oldMessages, userMsg];
+      }
+    );
+
     socketRef.current.send(JSON.stringify({ content: userMessage }));
 
     setUserMessage("");
@@ -207,14 +243,11 @@ function ChatBar() {
         value={userMessage}
         placeholder="Enter your message."
         onChange={(e) => setUserMessage(e.target.value)}
-        onKeyDown={(e)=>{
-          if(e.key=="Enter") sendMessage()
+        onKeyDown={(e) => {
+          if (e.key == "Enter") sendMessage();
         }}
       />
-      <div className=" cursor-pointer"
-      onClick={sendMessage}
-      
-      >
+      <div className=" cursor-pointer" onClick={sendMessage}>
         <FaArrowCircleUp size={24} />
       </div>
     </div>

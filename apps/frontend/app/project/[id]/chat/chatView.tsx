@@ -119,6 +119,16 @@ function AIMessage({ message, allMessages }: { message: ChatMessage; allMessages
                 </div>
               );
         }
+        case "delete_file":{
+          const fileName = mes_dict.args.file_path.split("/").pop();
+          return (
+            <div className="px-2 py-4 text-white/70">
+              <h1 className="break-all whitespace-pre-wrap text-sm">
+                    Deleting file: {fileName}
+                  </h1>
+            </div>
+          )
+        }
       }
     }
   } else {
@@ -133,6 +143,16 @@ function AIMessage({ message, allMessages }: { message: ChatMessage; allMessages
             {mesContent.status} {mesContent.path}
           </h1>
         </div>
+        }
+        case "delete_file":{
+          const fileName = mesContent.path.split("/").pop();
+          return (
+            <div className="px-2 py-4 text-white/70">
+              <h1 className="break-all whitespace-pre-wrap text-sm">
+                    Deleted : {fileName}
+                  </h1>
+            </div>
+          )
         }
         case "list_files":{
           const files = mesContent.files
