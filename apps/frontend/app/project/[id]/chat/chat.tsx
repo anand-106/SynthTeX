@@ -1,6 +1,6 @@
 "use client";
 import { FaArrowCircleUp } from "react-icons/fa";
-import { Dispatch, SetStateAction, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@clerk/nextjs";
 import { useParams } from "next/navigation";
 import { ChatMessage } from "@/types/types";
@@ -10,9 +10,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { searchAndReplace } from "@/utils/tool_utils";
 
 export function Chat() {
-    const [messages, setMessages] = useState<ChatMessage[]>([]);
     const param = useParams()
-    
     const project_id = param.id
     const {getToken} = useAuth()
 
@@ -24,7 +22,6 @@ export function Chat() {
             Authorization:`Bearer ${token}`
           }
         })
-        setMessages(res.data)
         return res.data
       }
       catch(err){
@@ -32,7 +29,7 @@ export function Chat() {
       }
     }
 
-    const {data,isLoading,error} = useQuery<ChatMessage[]>({
+    const {data: messages, isLoading, error} = useQuery<ChatMessage[]>({
       queryKey:[`project_chat_${project_id}`],
       queryFn: get_messages,
       staleTime: 5*60*1000,
@@ -45,20 +42,18 @@ export function Chat() {
   return (
     <div className="w-[400px] h-full border-l bg-[#151515] shrink-0 border-white/20 flex flex-col overflow-hidden">
       <div className="w-full flex-1 overflow-y-auto scrollbar-none">
-        <ChatView messages={messages} />
+        <ChatView messages={messages || []} />
       </div>
 
       <div className="w-full p-2">
-
-        <ChatBar setMessages={setMessages} />
+        <ChatBar />
       </div>
     </div>
   );
 }
 
 
-function ChatBar({setMessages}:{setMessages:Dispatch<SetStateAction<ChatMessage[]>>}) {
-
+function ChatBar() {
     const [userMessage, setUserMessage] = useState("");
     const queryClient = useQueryClient();
 
@@ -98,13 +93,17 @@ function ChatBar({setMessages}:{setMessages:Dispatch<SetStateAction<ChatMessage[
               content: data.content,
               role: "model",
             };
-            setMessages((prev) => [...prev, aiMessage]);
+            
+     
+            queryClient.setQueryData<ChatMessage[]>([`project_chat_${projectId}`], (oldMessages = []) => {
+              return [...oldMessages, aiMessage];
+            });
 
             const parsedContent=JSON.parse(data.content)
 
             if(parsedContent.type=="tool_call" && parsedContent.name === "search_replace")
             {
-
+        
               const args = parsedContent.args;
               const replaceText = searchAndReplace(args.old_string,args.new_string,args.file_path,queryClient)
               queryClient.setQueryData(['file',args.file_path],{
@@ -112,18 +111,21 @@ function ChatBar({setMessages}:{setMessages:Dispatch<SetStateAction<ChatMessage[
                 content: replaceText,
                 path: args.file_path
               })
-
             }
           }
           if (data.sender === "tools") {
-            const aiMessage: ChatMessage = {
+            const toolsMessage: ChatMessage = {
               id: crypto.randomUUID(),
               project_id:data.project_id,
               created_at:data.created_at,
               content: data.content,
               role: "tools",
             };
-            setMessages((prev) => [...prev, aiMessage]);
+            
+           
+            queryClient.setQueryData<ChatMessage[]>([`project_chat_${projectId}`], (oldMessages = []) => {
+              return [...oldMessages, toolsMessage];
+            });
           } 
           else {
             console.log("from ws: ", data);
@@ -170,7 +172,7 @@ function ChatBar({setMessages}:{setMessages:Dispatch<SetStateAction<ChatMessage[
       socketRef.current?.close();
       socketRef.current = null;
     };
-  }, [projectId, getToken, setMessages]);
+  }, [projectId, getToken, queryClient]);
 
   const sendMessage = async () => {
     if (!userMessage.trim()) return;
@@ -180,17 +182,18 @@ function ChatBar({setMessages}:{setMessages:Dispatch<SetStateAction<ChatMessage[
       return;
     }
 
-    const msg: ChatMessage = {
-        id:crypto.randomUUID(),
-        project_id:projectId!.toString(),
+    
+    const userMsg: ChatMessage = {
+      id: crypto.randomUUID(),
+      project_id: projectId!.toString(),
       content: userMessage,
-      created_at:null,
+      created_at: null,
       role: "user",
     };
-
     
-    setMessages((prev) => [...prev, msg]);
-
+    queryClient.setQueryData<ChatMessage[]>([`project_chat_${projectId}`], (oldMessages = []) => {
+      return [...oldMessages, userMsg];
+    });
    
     socketRef.current.send(JSON.stringify({ content: userMessage }));
 

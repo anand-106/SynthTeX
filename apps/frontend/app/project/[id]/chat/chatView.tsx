@@ -127,30 +127,6 @@ function AIMessage({ message, allMessages }: { message: ChatMessage; allMessages
       const mesContent = JSON.parse(mes_dict.text)
       switch(mesContent.tool_name){
         case "create_file":{
-       
-          const toolCallMessage = allMessages.find(m => 
-            m.role === "model" && 
-            JSON.parse(m.content).type === "tool_call" &&
-            JSON.parse(m.content).name === "create_file" &&
-            JSON.parse(m.content).args.relative_path === mesContent.path
-          )
-          
-          if(toolCallMessage && mesContent.s3_key){
-            try {
-              const toolCallContent = JSON.parse(toolCallMessage.content)
-              const fileContent = toolCallContent.args.content
-              
-              if(fileContent) {
-                queryClient.setQueryData(['file', mesContent.s3_key], {
-                  type:'latex' as const,
-                  content: fileContent,
-                  path: mesContent.s3_key
-                })
-              }
-            } catch (e) {
-              console.error('Error parsing tool_call content:', e)
-            }
-          }
           
           return <div className="px-2 py-4 text-white/70">
           <h1 className="break-all whitespace-pre-wrap text-sm">

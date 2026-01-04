@@ -79,7 +79,7 @@ setBgColor("#151515")
     queryFn:preFetchProject,
     staleTime:10*60*1000,
     refetchOnWindowFocus:false,
-    refetchOnMount:false
+    refetchOnMount:true
   })
 
   const { data, isLoading, error } = useQuery<Project>({

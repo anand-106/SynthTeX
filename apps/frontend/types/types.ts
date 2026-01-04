@@ -29,7 +29,6 @@ export type FileTreeNode = {
 
 
   export type SelectedFile ={
-    id:string,
     type : "latex" | "pdf",
     path:string,
     content : string
