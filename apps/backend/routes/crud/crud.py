@@ -4,11 +4,11 @@ from typing_extensions import List
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from utils.crud.file_tree_builder import build_file_tree
-from utils.s3.uploader import generate_presigned_url, read_s3_bytes
+from utils.s3.uploader import generate_presigned_url, read_s3_bytes, upload_bytes
 from db.get_db import get_db
 from utils.auth.isSignedin import verify_clerk_user
 from db.models import CompilationJob, CompileStatus, File, Project
-from routes.crud.models import CompileIn, ProjectModel, ProjectsOut
+from routes.crud.models import CompileIn, FileIn, ProjectModel, ProjectsOut
 from dotenv import load_dotenv
 from arq import create_pool
 from arq.connections import RedisSettings
@@ -72,6 +72,29 @@ def get_file(file_id:UUID,auth_user=Depends(verify_clerk_user),db:Session=Depend
     except Exception as e:
 
         raise HTTPException(500,f"Error getting File {e}")
+
+@crud_router.put('/file/{file_id}')
+def update_file(request:FileIn,file_id:UUID,auth_user=Depends(verify_clerk_user),db:Session=Depends(get_db)):
+
+    try:
+        
+        file_data = db.query(File).filter(File.id==file_id).first()
+
+        if not file_data:
+            raise HTTPException(404,"File not found")
+        
+        upload_bytes(file_data.storage_path,request.content,"text/plain; charset=utf-8")
+
+        return {
+            "id":file_data.id,
+            "file_name":file_data.filename,
+            "status" : "updated"
+        }
+        
+    except Exception as e:
+
+        raise HTTPException(500,f"Error getting File {e}")
+
 
 @crud_router.get('/file/{file_id}/url')
 def get_file_url(file_id:UUID,auth_user=Depends(verify_clerk_user),db:Session=Depends(get_db)):

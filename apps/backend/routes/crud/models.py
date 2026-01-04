@@ -16,3 +16,6 @@ class ProjectsOut(BaseModel):
 
 class CompileIn(BaseModel):
     project_id:str
+
+class FileIn(BaseModel):
+    content:str

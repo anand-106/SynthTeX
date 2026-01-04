@@ -8,6 +8,7 @@ import { FaArrowRight } from "react-icons/fa";
 import Link from "next/link";
 import CreateProjectModal from "./createProjectModal";
 import { useRouter } from "next/navigation";
+import { SortArray } from "@/utils/sortItems";
 
 export function ProjectsList() {
   const { getToken } = useAuth();
@@ -68,14 +69,18 @@ export function ProjectsList() {
       </div>
     );
   if (data)
+  {
+    const sortedData = SortArray(data,"dsc")
+
     return (
-      <div className="flex m-15 gap-6">
+      <div className="flex gap-6 flex-wrap">
         <CreateProjectModal onCreate={handleCreateProject} />
-        {data.map((pro) => (
+        {sortedData.map((pro) => (
           <ProjectCard project={pro} key={pro.id} />
         ))}
       </div>
     );
+  }
 }
 
 function ProjectCard({ project }: { project: Project }) {
