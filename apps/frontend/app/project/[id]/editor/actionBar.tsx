@@ -57,7 +57,6 @@ export function ActionBar(){
  
     useEffect(() => {
         if (jobStatus?.status === 'success') {
-            queryClient.invalidateQueries({ queryKey: [`Project_tree_${project_id}`] })
 
             setTimeout(() => setCompileID(null), 3000)
         }

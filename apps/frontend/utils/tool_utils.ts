@@ -11,7 +11,7 @@ function normalizeLatexString(s: string): string {
 export function searchAndReplace(old_string: string, new_string: string, path: string,queryClient:QueryClient) {
   const { setLatex, selectedFilePath } = useEditorStore.getState()
   
-  // Normalize LLM escaping issues
+
   const normalizedOld = normalizeLatexString(old_string)
   const normalizedNew = normalizeLatexString(new_string)
 

@@ -44,6 +44,26 @@ function AIMessage({ message, allMessages }: { message: ChatMessage; allMessages
   const mes_dict = JSON.parse(message.content);
   const param = useParams()
   const project_id = param.id;
+  const hasInvalidatedRef = useRef(false);
+  
+
+  useEffect(() => {
+    if (message.role !== "model") {
+      try {
+        const parsedContent = JSON.parse(message.content);
+        if (parsedContent.type === "text") {
+          const mesContent = JSON.parse(parsedContent.text);
+          if (mesContent.tool_name === "create_file" && !hasInvalidatedRef.current) {
+            queryClient.invalidateQueries({queryKey:[`Project_tree_${project_id}`]})
+            hasInvalidatedRef.current = true;
+          }
+        }
+      } catch (e) {
+      
+      }
+    }
+  }, [message.id, message.role, message.content, queryClient, project_id]);
+  
   if (message.role == "model") {
     if (mes_dict.type == "text")
       return (
@@ -102,14 +122,12 @@ function AIMessage({ message, allMessages }: { message: ChatMessage; allMessages
       }
     }
   } else {
-    console.log(mes_dict)
+
     if(mes_dict.type=="text"){
       const mesContent = JSON.parse(mes_dict.text)
       switch(mesContent.tool_name){
         case "create_file":{
-          queryClient.invalidateQueries({queryKey:[`Project_tree_${project_id}`]})
-
-          // Find the matching tool_call message to get the file content
+       
           const toolCallMessage = allMessages.find(m => 
             m.role === "model" && 
             JSON.parse(m.content).type === "tool_call" &&
