@@ -1,6 +1,7 @@
 "use client";
 
 import { useLayoutStore } from "@/stores/layoutStore";
+import { usePathname } from "next/navigation";
 import {
   SignInButton,
   SignUpButton,
@@ -11,11 +12,17 @@ import {
 
 export function HeaderWrapper() {
   const bgColor = useLayoutStore((state) => state.bgColor);
+  const pathname = usePathname();
+  const isHomePage = pathname === "/";
 
   return (
     <header
-      style={{ backgroundColor: bgColor }}
-      className="flex justify-between items-center p-4 gap-4 h-16"
+      style={{ backgroundColor: isHomePage ? "transparent" : bgColor }}
+      className={`flex justify-between items-center p-4 gap-4 h-16 ${
+        isHomePage 
+          ? "absolute top-0 left-0 right-0 z-50" 
+          : "relative"
+      }`}
     >
       <div className="flex">
         <h1 className="font-bold text-2xl font-gsans">Synth</h1>

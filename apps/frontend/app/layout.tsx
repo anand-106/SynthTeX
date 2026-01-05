@@ -38,7 +38,7 @@ export default function RootLayout({
   return (
     <ClerkProvider>
       <html lang="en">
-        <BodyWrapper className={`${inter.variable} ${jetBrainsMono.variable} ${gSans.variable} antialiased`}>
+        <BodyWrapper className={`${inter.variable} ${jetBrainsMono.variable} ${gSans.variable} antialiased text-white`}>
           <Providers>
             <HeaderWrapper />
             {children}
