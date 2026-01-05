@@ -8,6 +8,7 @@ import { useParams } from "next/navigation"
 import { useEffect, useState } from "react";
 import { BsArrowRepeat } from "react-icons/bs";
 import { FaRegSave } from "react-icons/fa";
+import { FiDownload } from "react-icons/fi";
 
 
 export function ActionBar(){
@@ -73,10 +74,13 @@ export function ActionBar(){
     }
 
     return (
-        <div className="h-[45px] bg-[#151515] flex items-center justify-between border-b border-white/20 mb-[15px] px-4">
+        <div className="h-[45px] bg-[#151515] flex items-center justify-between border-b border-white/20 px-4">
             <h1 className="font-semibold text-lg">{filename}</h1>
             <div className="flex gap-4">
-            <SaveButton />
+                {
+
+            filename?.endsWith(".pdf")?<DownloadButton />:<SaveButton />
+                }
             <CompileButton 
                 compileStatus={getDisplayStatus()} 
                 onCompile={() => compileMutation.mutate()}
@@ -116,8 +120,11 @@ function SaveButton(){
 
     const {getToken} = useAuth()
 
+    const queryClient = useQueryClient()
+
     const fileId = useEditorStore(state=>state.selectedFileId)
     const content = useEditorStore(state=>state.latex)
+    const filePath = useEditorStore(state=>state.selectedFilePath)
 
     const saveFile =async ()=>{
         const token = await getToken()
@@ -135,6 +142,16 @@ function SaveButton(){
     const saveMutation = useMutation({
         mutationFn:saveFile,
 
+        onSuccess:()=>{
+            if(filePath){
+                queryClient.setQueryData(['file',filePath],{
+                    type: "latex" as const,
+                    content : content,
+                    path: filePath
+                })
+            }
+        }
+
     })
 
     return <button
@@ -148,3 +165,38 @@ function SaveButton(){
             <FaRegSave size={18} />
     </button>
 }
+
+
+function DownloadButton() {
+    const { getToken } = useAuth();
+    const fileId = useEditorStore((state) => state.selectedFileId);
+  
+    const downloadMutation = useMutation({
+      mutationFn: async () => {
+        const token = await getToken();
+  
+        const res = await axiosClient.get(`/file/${fileId}/download`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+  
+        return res.data.url;
+      },
+      onSuccess: (downloadUrl) => {
+        window.location.href = downloadUrl;
+      },
+    });
+  
+    return (
+      <button
+        disabled={downloadMutation.isPending}
+        onClick={() => downloadMutation.mutate()}
+        className="cursor-pointer bg-white/10 rounded-lg flex gap-2 items-center justify-center disabled:cursor-not-allowed p-2"
+      >
+        <h1 className="font-semibold text-sm">
+        {downloadMutation.isPending ? "Preparing…" : "Download"}
+        </h1>
+        <FiDownload size={18} />
+      </button>
+    );
+  }
+  

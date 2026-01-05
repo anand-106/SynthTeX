@@ -43,3 +43,24 @@ def generate_presigned_url(key:str,expiration:int=3600):
     except Exception as e:
         print(f"error generating presigned url : {e}")
         return None
+
+def generate_download_url(key:str,expiration:int=300):
+
+    try:
+        response = s3.generate_presigned_url(
+                    ClientMethod="get_object",
+                    Params={
+                        "Bucket": bucket,
+                        "Key": key,
+                        "ResponseContentDisposition": "attachment; filename=output.pdf",
+                        "ResponseContentType": "application/pdf",
+                    },
+                    ExpiresIn=300
+                )
+
+        return response
+    except Exception as e:
+
+        print(f"errror generating download url {e}")
+
+        return None

@@ -4,7 +4,7 @@ from typing_extensions import List
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from utils.crud.file_tree_builder import build_file_tree
-from utils.s3.uploader import generate_presigned_url, read_s3_bytes, upload_bytes
+from utils.s3.uploader import generate_download_url, generate_presigned_url, read_s3_bytes, upload_bytes
 from db.get_db import get_db
 from utils.auth.isSignedin import verify_clerk_user
 from db.models import CompilationJob, CompileStatus, File, Project
@@ -107,6 +107,26 @@ def get_file_url(file_id:UUID,auth_user=Depends(verify_clerk_user),db:Session=De
             raise HTTPException(404,"File not found")
         
         url = generate_presigned_url(file_data.storage_path)
+
+        return {
+            "url":url
+        }
+        
+    except Exception as e:
+
+        raise HTTPException(500,f"Error getting File {e}")
+
+@crud_router.get('/file/{file_id}/download')
+def get_file_url(file_id:UUID,auth_user=Depends(verify_clerk_user),db:Session=Depends(get_db)):
+
+    try:
+        
+        file_data = db.query(File).filter(File.id==file_id).first()
+
+        if not file_data:
+            raise HTTPException(404,"File not found")
+        
+        url = generate_download_url(file_data.storage_path)
 
         return {
             "url":url

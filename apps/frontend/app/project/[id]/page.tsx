@@ -12,6 +12,7 @@ import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import { useEditorStore } from "@/stores/editorStore";
 import { useLayoutStore } from "@/stores/layoutStore";
+import { ActionBar } from "./editor/actionBar";
 
 
 const PDFViewer = dynamic(
@@ -108,10 +109,13 @@ setBgColor("#151515")
         {/* <h1>{data.name}</h1> */}
         <div className="w-full flex-1 flex h-full">
         <ProjectTree />
+        <div className="flex flex-col flex-1">
+        <ActionBar/>
         {
           selectedFileType=="latex"?<EditorSection />:<PDFViewer url={selectedFileContent} />
         }
         
+        </div>
         <Chat />
         </div>
       </div>
