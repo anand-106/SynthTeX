@@ -73,7 +73,7 @@ export function ProjectsList() {
     const sortedData = SortArray(data,"dsc")
 
     return (
-      <div className="flex gap-6 flex-wrap">
+      <div className="flex gap-6 flex-wrap fade-in">
         <CreateProjectModal onCreate={handleCreateProject} />
         {sortedData.map((pro) => (
           <ProjectCard project={pro} key={pro.id} />

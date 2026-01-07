@@ -239,7 +239,7 @@ function ChatBar() {
   return (
     <div className="w-full border border-white/20 rounded-lg p-2 flex flex-col items-end">
       <textarea
-        className="outline-0 h-[100px] w-full  p-2"
+        className="outline-0 h-[100px] w-full  p-2 scrollbar scrollbar-track-[#151515] scrollbar-thumb-white/30"
         value={userMessage}
         placeholder="Enter your message."
         onChange={(e) => setUserMessage(e.target.value)}

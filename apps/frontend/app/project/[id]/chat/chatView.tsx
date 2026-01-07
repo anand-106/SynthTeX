@@ -75,6 +75,15 @@ function AIMessage({ message, allMessages }: { message: ChatMessage; allMessages
           </div>
         </div>
       );
+    
+    if(mes_dict.type=="reasoning"){
+      const content = mes_dict.reasoning
+      return <div className="px-2 py-4 text-white/70">
+      <h1 className="break-all whitespace-pre-wrap text-sm">
+        {content}
+      </h1>
+    </div>
+    }
 
     if (mes_dict.type == "tool_call") {
       switch (mes_dict.name) {

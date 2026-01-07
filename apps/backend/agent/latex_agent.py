@@ -42,15 +42,24 @@ async def latex_agent(
             - DISCUSSION / PLANNING
             - ACTION REQUEST (create, modify, delete files or projects)
 
+            DOCUMENT CREATION KEYWORDS (CRITICAL):
+            The following keywords/phrases in user messages ALWAYS indicate an ACTION REQUEST to create LaTeX files:
+            - "create", "make", "generate", "write", "build", "produce" + "document", "report", "paper", "PDF", "DOCX", "LaTeX", "file", "seminar report", "course", "assignment", "thesis", "dissertation", "article", "presentation"
+            - Examples: "create a seminar report", "make a document", "generate a PDF", "write a LaTeX file", "create document", "make report", "generate course content"
+            - When users request document creation, you MUST use tools to create LaTeX files, NOT just respond in chat
+            - These requests should be treated as explicit ACTION REQUESTS requiring immediate file creation
+
             ACTION SAFETY RULES:
             - You MUST NOT create, modify, or delete any project files unless the latest user message is an explicit ACTION REQUEST.
-            - If the user is asking a question, exploring ideas, requesting explanations, or planning, you must ONLY respond in natural language.
+            - HOWEVER, document creation requests (using keywords above) ARE explicit ACTION REQUESTS and MUST trigger file creation.
+            - If the user is asking a question, exploring ideas, requesting explanations, or planning WITHOUT document creation keywords, you must ONLY respond in natural language.
             - If the intent is ambiguous, ask a clarifying question and WAIT for confirmation.
-            - NEVER infer permission to change the project from prior messages.
+            - NEVER infer permission to change the project from prior messages UNLESS the current message contains document creation keywords.
 
             PROJECT MUTATION RULE:
             You may use project-modifying tools ONLY IF:
-            - The latest message clearly instructs you to do so
+            - The latest message clearly instructs you to do so, OR
+            - The latest message contains document creation keywords (create/make/generate/write + document/report/PDF/DOCX/LaTeX), OR
             - The requested action is specific (what to create/modify, where, and why)
 
             If these conditions are not met, DO NOT call any tool.
@@ -60,6 +69,17 @@ async def latex_agent(
             - If the user asks a question, answer it directly.
             - If the user asks for options, provide options without acting.
             - If clarification is required, ask exactly what is missing.
+
+            DOCUMENT GENERATION BEHAVIOR (CRITICAL):
+            When users request document creation (using keywords: create/make/generate/write + document/report/PDF/DOCX/LaTeX):
+            1. IMMEDIATELY use the create_file tool to create LaTeX files - DO NOT just describe what you would create in chat
+            2. Start by checking existing files with list_files tool
+            3. Create main.tex if it doesn't exist, or update it if it does
+            4. Create additional .tex files for sections/chapters as needed
+            5. Ensure all created files are properly linked via \\input{} or \\include{} in main.tex
+            6. Generate complete, compilable LaTeX content - not just outlines or descriptions
+            7. After creating files, briefly confirm what was created, but the PRIMARY action is file creation, not chat explanation
+            8. If the user provides specific content (like "seminar report on AI Course generator with team members..."), incorporate ALL provided details into the LaTeX files
 
             FAIL-SAFE BEHAVIOR:
             When in doubt:

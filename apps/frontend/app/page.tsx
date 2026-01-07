@@ -40,6 +40,10 @@ export default function Home(){
 
       <Features />
       </div>
+      <div className="w-full mt-[100px]">
+
+      <Footer />
+      </div>
     </div>
   );
 }
@@ -47,13 +51,23 @@ export default function Home(){
 
 function Header(){
   return <div className="flex flex-col items-center bg-transparent">
+    <div className="flex mb-6">
+
 <BlurText
-        text="SynthTex"
+        text="Synth"
         delay={150}
         animateBy="words"
         direction="top"
-        className="text-8xl mb-8 font-gsans font-black"
-      />
+        className="text-8xl font-gsans font-black"
+        />
+        <BlurText
+  text="Tex"
+  delay={150}
+  animateBy="words"
+  direction="top"
+  className="text-8xl font-gsans font-black bg-linear-to-br from-[#AC71F8] to-[#F994D4] bg-clip-text text-transparent ml-[-5px]"
+/>
+        </div>
     <BlurText
         text="The Cursor for Latex!"
         delay={200}
@@ -81,7 +95,7 @@ function Buttons(){
 }
 function CallOut(){
   return <div>
-    <h1>Trusted by students across institutions</h1>
+    <h1 className="text-white/60">Trusted by students across institutions</h1>
     </div>
 }
 
@@ -92,5 +106,12 @@ function Banner(){
 }
 
 function Footer(){
-  
+  return <div className="h-[300px] bg-white/10 flex items-center px-20 justify-between">
+    <div className="flex flex-col gap-3">
+    <h1 className="font-gsans font-bold text-2xl">SynthTex</h1>
+<h1 className="text-white/70">The future of LaTeX editing is here. Powered by AI, designed for writers.</h1>
+      </div>
+    <div>
+      </div>
+  </div>
 }
