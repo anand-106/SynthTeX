@@ -1,3 +1,4 @@
+from datetime import datetime
 import json
 import pprint
 
@@ -159,33 +160,65 @@ async def latex_agent(
             "user": MessageRole.user
         }
 
-        async for chunk in agent.astream(
+        async for stream_mode, data in agent.astream(
             {"messages": messages},
             context=AgentContext(project_id=project_id),
-            stream_mode="updates"
+            stream_mode=["messages","updates"]
         ):
-            for step,data in chunk.items():
-                last_message = data['messages'][-1].content_blocks
+            if stream_mode == "messages":
+                token,metadata = data
 
-                pprint.pprint({
-                    "step":step,
-                    "content":last_message
-                })
-                for mes in last_message:
-                    string_mes = json.dumps(mes)
-                    await ws.send_json({
-                        "sender":step,
-                        "content":string_mes
-                    })
+                if hasattr(token,'content_blocks'):
+                    for block in token.content_blocks:
+                        if block.get('type') == 'text' and block.get('text'):
 
-                    message_row = ChatMessage(
-                    project_id=project.id,
-                    role=STEP_TO_ROLE[step],
-                    content=string_mes
-                    )
-                    db.add(message_row)
-                    db.commit()
-                    db.refresh(message_row)
+                            await ws.send_json({
+                                    "type": "text_token",
+                                    "sender": metadata.get('langgraph_node', 'model'),
+                                    "content": block['text'],
+                                    "project_id": project_id,
+                                    "created_at": datetime.now().isoformat()
+                                })
+                        if block.get('type') == 'reasoning' and block.get('reasoning'):
+                            await ws.send_json({
+                                    "type": "reason_token",
+                                    "sender": metadata.get('langgraph_node', 'model'),
+                                    "content": block['reasoning'],
+                                    "project_id": project_id,
+                                    "created_at": datetime.now().isoformat()
+                                })
+                                    
+            elif stream_mode == "updates":
+
+                for step, step_data in data.items():
+                    last_message = step_data['messages'][-1]
+
+                    if hasattr(last_message, 'content_blocks'):
+                        for mes in last_message.content_blocks:
+                            string_mes = json.dumps(mes)
+                            await ws.send_json({
+                                "type": "update",
+                                "sender": step,
+                                "content": string_mes,
+                                "project_id": project_id,
+                                "created_at": datetime.now().isoformat()
+                            })
+                            
+                            # Save to database
+                            message_row = ChatMessage(
+                                project_id=project.id,
+                                role=STEP_TO_ROLE[step],
+                                content=string_mes
+                            )
+                            db.add(message_row)
+                            db.commit()
+                            db.refresh(message_row)
+        
+        await ws.send_json({
+            "type": "token_end",
+            "sender": "model",
+            "project_id": project_id
+        })
 
         print("Request ended")      
 

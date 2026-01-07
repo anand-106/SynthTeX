@@ -72,6 +72,7 @@ function ChatBar() {
   const [socket, setSocket] = useState<WebSocket | null>(null);
   const socketRef = useRef<WebSocket | null>(null);
   const retryRef = useRef(0);
+  const streamingMessageIdRef = useRef<string|null>(null);
 
   const param = useParams()
 
@@ -101,7 +102,88 @@ function ChatBar() {
         try {
           const data = JSON.parse(event.data);
 
-          if (data.sender === "model") {
+          if(data.type == 'text_token'|| data.type == 'reason_token'){
+            const msgId = streamingMessageIdRef.current || crypto.randomUUID()
+
+            if(!streamingMessageIdRef.current && data.type == 'text_token'){
+              streamingMessageIdRef.current = msgId;
+
+              const streamingMessage: ChatMessage = {
+                id: msgId,
+                project_id: data.project_id,
+                created_at: data.created_at,
+                content: JSON.stringify({ type: "text", text: "" }),
+                role: "model",
+              };
+
+              queryClient.setQueryData<ChatMessage[]>(
+                [`project_chat_${projectId}`],
+                (oldMessages = []) => [...oldMessages, streamingMessage]
+              );
+              
+            }
+            if(!streamingMessageIdRef.current && data.type == 'reason_token'){
+              streamingMessageIdRef.current = msgId;
+
+              const streamingMessage: ChatMessage = {
+                id: msgId,
+                project_id: data.project_id,
+                created_at: data.created_at,
+                content: JSON.stringify({ type: "reasoning", reasoning:"" }),
+                role: "model",
+              };
+
+              queryClient.setQueryData<ChatMessage[]>(
+                [`project_chat_${projectId}`],
+                (oldMessages = []) => [...oldMessages, streamingMessage]
+              );
+              
+            }
+
+              queryClient.setQueryData<ChatMessage[]>([`project_chat_${projectId}`],(old_messages =[])=>{
+                return old_messages.map(msg=>{
+                  if(msg.id==msgId){
+                    try{
+                      const parsed = JSON.parse(msg.content)
+
+                      if(parsed.type == "text"){
+
+                        const currentText = parsed.text
+                        
+                        return {
+                          ...msg,
+                          content:JSON.stringify({
+                            type:"text",
+                            text: currentText + data.content
+                          })
+                        }
+                      }
+                      else{
+                        const currentText = parsed.reasoning
+                        
+                        return {
+                          ...msg,
+                          content:JSON.stringify({
+                            type:"reasoning",
+                            text: currentText + data.content
+                          })
+                        }
+                      }
+
+                    }
+                    catch{
+                      return msg
+                    }
+                  }
+                  return msg
+                })
+              })
+          }
+          else if(data.type === 'token_end'){
+            streamingMessageIdRef.current = null
+          }
+
+          else if (data.type == "update"){if (data.sender === "model") {
             const aiMessage: ChatMessage = {
               id: crypto.randomUUID(),
               project_id: data.project_id,
@@ -163,7 +245,7 @@ function ChatBar() {
             }
           } else {
             console.log("from ws: ", data);
-          }
+          }}
         } catch {
           console.log("Non-JSON message:", event.data);
         }
