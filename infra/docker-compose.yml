@@ -1,6 +1,34 @@
-version: "3.9"
 
 services:
+
+  synthtex-backend:
+    build: ../apps/backend
+    container_name: synthtex-backend
+    restart: unless-stopped
+    env_file:
+      - ../apps/backend/.env
+    ports:
+      - "8000:8000"
+    depends_on:
+      synthtex-postgres:
+        condition: service_healthy
+      synthtex-redis:
+        condition: service_healthy
+    command: ["uv", "run", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+
+  synthtex-compiler:
+    build: ../apps/compiler
+    container_name: synthtex-compiler
+    restart: unless-stopped
+    env_file:
+      - ../apps/compiler/.env
+    depends_on:
+      synthtex-postgres:
+        condition: service_healthy
+      synthtex-redis:
+        condition: service_healthy
+    command: ["uv", "run", "arq", "worker.WorkerSettings"]
+
   synthtex-postgres:
     image: postgres:16
     container_name: synthtex-postgres
@@ -14,10 +42,26 @@ services:
     ports:
       - "5434:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U synthtex_user"]
+      test: ["CMD-SHELL", pg_isready -U synthtex_user -d synthtex_db]
       interval: 5s
       timeout: 5s
+      retries: 5
+    
+  synthtex-redis:
+    image: redis:7
+    container_name: synthtex-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - synthtex_redisdata:/data
+    command: ["redis-server", "--appendonly","yes"]
+    healthcheck:
+      test: ["CMD", "redis-cli","ping"]
+      interval: 5s
+      timeout: 3s
       retries: 5
 
 volumes:
   synthtex_pgdata:
+  synthtex_redisdata:
