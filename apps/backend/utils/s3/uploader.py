@@ -64,3 +64,16 @@ def generate_download_url(key:str,expiration:int=300):
         print(f"errror generating download url {e}")
 
         return None
+
+def generate_presigned_upload_url(key:str,content_type:str,expires_in: int = 300):
+
+    return s3.generate_presigned_url(
+        ClientMethod="put_object",
+        Params={
+            "Bucket": bucket,
+            "Key": key,
+            "ContentType": content_type,
+        },
+        ExpiresIn=expires_in,
+    )
+

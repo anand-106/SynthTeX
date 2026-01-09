@@ -8,7 +8,7 @@ from utils.s3.uploader import generate_download_url, generate_presigned_url, rea
 from db.get_db import get_db
 from utils.auth.isSignedin import verify_clerk_user
 from db.models import CompilationJob, CompileStatus, File, Project
-from routes.crud.models import CompileIn, FileIn, ProjectModel, ProjectsOut
+from routes.crud.models import CompileIn, FileIn, PresignIn, ProjectModel, ProjectsOut
 from dotenv import load_dotenv
 from arq import create_pool
 from arq.connections import RedisSettings
@@ -18,6 +18,7 @@ load_dotenv()
 crud_router = APIRouter()
 
 REDIS_URL_COMPILER = os.getenv("REDIS_URL_SYNCER", "redis://localhost:6379")
+S3_ENV_PREFIX=os.getenv("S3_ENV_PREFIX","dev")
 
 @crud_router.post('/project')
 def create_project(project:ProjectModel,auth_user=Depends(verify_clerk_user),db:Session=Depends(get_db)):
@@ -135,6 +136,24 @@ def get_file_url(file_id:UUID,auth_user=Depends(verify_clerk_user),db:Session=De
     except Exception as e:
 
         raise HTTPException(500,f"Error getting File {e}")
+
+@crud_router.post('/file/presign')
+def presign_upload(request:PresignIn,auth_user=Depends(verify_clerk_user),db:Session=Depends(get_db)):
+
+    key = f"{S3_ENV_PREFIX}/projects/{request.project_id}/files/{request.filename}"
+
+    upload_url = generate_presigned_url(
+        key=key,
+        content_type=request.content_type
+    )
+
+    return {
+        "upload_url": upload_url,
+        "key": key,
+        "expires_in": 300
+    }
+
+
 
 
 
