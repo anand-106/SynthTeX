@@ -18,12 +18,15 @@ def build_file_tree(files: List[File], project_id: str) -> List[Dict[str, Any]]:
         
 
         if prefix_to_strip is None:
-
             files_idx = storage_path.find("/files/")
             if files_idx != -1:
                 prefix_to_strip = storage_path[:files_idx + 7]
             else:
-                prefix_to_strip = ""
+                kb_idx = storage_path.find("/kb/")
+                if kb_idx != -1:
+                    prefix_to_strip = storage_path[:kb_idx + 4]
+                else:
+                    prefix_to_strip = ""
         
    
         relative_path = storage_path.replace(prefix_to_strip, "") if prefix_to_strip else storage_path

@@ -21,6 +21,10 @@ class FileIn(BaseModel):
     content:str
 
 class PresignIn(BaseModel):
-    project_id:str
     filename:str
     content_type:str
+
+class ConfirmFileIn(BaseModel):
+    key:str
+    project_id:str
+    filename:str

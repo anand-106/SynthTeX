@@ -9,18 +9,14 @@ import { Tree, NodeApi } from "react-arborist";
 import { FaRegFolder } from "react-icons/fa";
 import { FaRegFolderOpen } from "react-icons/fa";
 import { FaRegFile } from "react-icons/fa";
+import { AddKBFiles } from "./addKBFiles";
 
-export function ProjectTree(){
-
+export function KBTree(){
     const {getToken} = useAuth()
     const param = useParams()
     const queryClient = useQueryClient();
-
     const projectId = param.id
     const {setLatex,setSelectedFile,setActiveEditorTab} = useEditorStore.getState()
-    
-
-    
 
     const FetchFileContent = async (fileId:string,FileName:string,path:string) =>{
         try{
@@ -31,16 +27,11 @@ export function ProjectTree(){
                     headers:{
                         Authorization:`Bearer ${token}`
                     }
-            
                 })
-                console.log("received presigned url",res.data.url)
                 setSelectedFile(fileId,path,res.data.url,"pdf")
-
             }
             else{
-
                 const cached = queryClient.getQueryData<SelectedFile>(['file',path])
-
                 if(cached){
                     setSelectedFile(fileId,path,cached.content,"latex")
                     setLatex(cached.content)
@@ -52,7 +43,7 @@ export function ProjectTree(){
                             Authorization:`Bearer ${token}`
                         }
                     })
-                    const data =  {
+                    const data = {
                         "type":"latex" as const,
                         "content":res.data.content,
                         "path":path
@@ -61,12 +52,7 @@ export function ProjectTree(){
                     setSelectedFile(fileId,path,res.data.content,"latex")
                     setLatex(res.data.content)
                     setActiveEditorTab("latex")
-
-
                 }
-
-                
-                
             }
         }
         catch(err){
@@ -74,16 +60,14 @@ export function ProjectTree(){
         }
     }
 
-    const getProjectTree= async()=>{
+    const getKBTree = async()=>{
         try{
             const token = await getToken()
-
-            const res = await axiosClient.get(`/project/${projectId}/files`,{
+            const res = await axiosClient.get(`/project/${projectId}/kb-files`,{
                 headers:{
                     Authorization:`Bearer ${token}`
                 }
             })
-
             return res.data
         }
         catch(err){
@@ -92,17 +76,21 @@ export function ProjectTree(){
     }
 
     const {data,isLoading,error} = useQuery<FileTreeResponse>({
-        queryKey:[`Project_tree_${projectId}`],
-        queryFn: getProjectTree,
+        queryKey:[`KB_tree_${projectId}`],
+        queryFn: getKBTree,
         staleTime: 5*60*1000,
         refetchOnWindowFocus:false,
         refetchOnMount:false
     })
 
-    if (isLoading) return <div className=" h-full w-[200px]"><h1>Loading...</h1></div>
-    if (error) return <div className=" h-full w-[200px]"><h1>Error getting data sources.</h1></div>
+    if (isLoading) return <div className="h-1/2 w-[290px] shrink-0 bg-[#151515] border-r border-t border-white/20 px-4"><h1>Loading...</h1></div>
+    if (error) return <div className="h-1/2 w-[290px] shrink-0 bg-[#151515] border-r border-t border-white/20 px-4"><h1>Error getting KB files.</h1></div>
 
-    return <div className=" h-full w-[290px] shrink-0 bg-[#151515] border-r border-white/20 px-4">
+    return <div className="flex-1 overflow-hidden w-[290px] shrink-0 bg-[#151515] border-r border-t border-white/20 px-4">
+        <div className="flex justify-between">
+            <h1>Kb Files</h1>
+            <AddKBFiles />
+        </div>
         <Tree data={data?.tree}
         width={250}
         openByDefault={false}
@@ -110,7 +98,6 @@ export function ProjectTree(){
         rowHeight={36}
         overscanCount={1}
         paddingTop={20}
-
         >
         {(props)=><Node {...props} onFileClick={FetchFileContent} />}
         </Tree>
@@ -127,27 +114,23 @@ function Node({node,style,onFileClick}:{node:NodeApi<FileTreeNode>,style:CSSProp
 }
 
 function Folder({node}:{node:NodeApi<FileTreeNode>}){
-    return <div className="flex gap-2 items-center  cursor-pointer"
+    return <div className="flex gap-2 items-center cursor-pointer min-w-0"
     onClick={()=>node.toggle()}
     >{
-
-        node.isOpen?<FaRegFolderOpen size={18}/>:<FaRegFolder size={18} /> 
+        node.isOpen?<FaRegFolderOpen size={18} className="shrink-0" />:<FaRegFolder size={18} className="shrink-0" /> 
     }
-        <h1>{node.data.name}</h1>
+        <h1 className="truncate min-w-0">{node.data.name}</h1>
     </div>
 }
 
 function File({node,onFileClick}:{node:NodeApi<FileTreeNode>,onFileClick:(id:string,fileName:string,path:string)=>void}){
-
-
     const selectedFileId = useEditorStore(state=>state.selectedFileId)
-
-    return <div className={`flex gap-2 items-center rounded-lg px-2 py-1 cursor-pointer ${selectedFileId===node.data.id? "bg-white/10":""}`}
+    return <div className={`flex gap-2 items-center rounded-lg px-2 py-1 cursor-pointer min-w-0 ${selectedFileId===node.data.id? "bg-white/10":""}`}
     onClick={()=>{
         onFileClick(node.data.id,node.data.name,node.data.path!)
     }}
     >
-        <FaRegFile size={18} /> 
-        <h1>{node.data.name}</h1>
+        <FaRegFile size={18} className="shrink-0" /> 
+        <h1 className="truncate min-w-0">{node.data.name}</h1>
     </div>
 }

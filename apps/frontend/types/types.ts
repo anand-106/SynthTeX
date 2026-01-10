@@ -38,3 +38,9 @@ export type FileTreeNode = {
     "status" : "idle"|"queued"|"running"|"success"|"failed",
     "path" : string | null
   }
+
+  export type KBFile ={
+    upload_url:string,
+    key:string,
+    expires_in:number
+  }

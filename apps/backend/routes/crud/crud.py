@@ -4,11 +4,11 @@ from typing_extensions import List
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from utils.crud.file_tree_builder import build_file_tree
-from utils.s3.uploader import generate_download_url, generate_presigned_url, read_s3_bytes, upload_bytes
+from utils.s3.uploader import generate_download_url, generate_presigned_upload_url, generate_presigned_url, object_check_s3, read_s3_bytes, upload_bytes
 from db.get_db import get_db
 from utils.auth.isSignedin import verify_clerk_user
-from db.models import CompilationJob, CompileStatus, File, Project
-from routes.crud.models import CompileIn, FileIn, PresignIn, ProjectModel, ProjectsOut
+from db.models import CompilationJob, CompileStatus, File, FileType, Project
+from routes.crud.models import CompileIn, ConfirmFileIn, FileIn, PresignIn, ProjectModel, ProjectsOut
 from dotenv import load_dotenv
 from arq import create_pool
 from arq.connections import RedisSettings
@@ -137,23 +137,46 @@ def get_file_url(file_id:UUID,auth_user=Depends(verify_clerk_user),db:Session=De
 
         raise HTTPException(500,f"Error getting File {e}")
 
-@crud_router.post('/file/presign')
-def presign_upload(request:PresignIn,auth_user=Depends(verify_clerk_user),db:Session=Depends(get_db)):
+@crud_router.post('/{project_id}/file/presign')
+def presign_upload(request:List[PresignIn],project_id:str,auth_user=Depends(verify_clerk_user),db:Session=Depends(get_db)):
 
-    key = f"{S3_ENV_PREFIX}/projects/{request.project_id}/files/{request.filename}"
+    res =[]
 
-    upload_url = generate_presigned_url(
+    for f in request:
+
+        key = f"{S3_ENV_PREFIX}/projects/{project_id}/kb/{f.filename}"
+
+        print(f"getting presign url for {key}")
+
+        upload_url = generate_presigned_upload_url(
         key=key,
-        content_type=request.content_type
-    )
+        content_type=f.content_type
+            )
 
-    return {
+        res.append({
         "upload_url": upload_url,
         "key": key,
         "expires_in": 300
-    }
+        })
+    
 
+    return res
 
+@crud_router.post('/file/confirm')
+def confirm_file_upload(request:ConfirmFileIn,db:Session=Depends(get_db),auth_user=Depends(verify_clerk_user)):
+
+    print(f"confirming file {request.filename}")
+
+    try:
+        if object_check_s3(request.key):
+            file_row = File(project_id=request.project_id,filename=request.filename,file_type=FileType.knowledge_base,storage_path=request.key)
+            db.add(file_row)
+            db.commit()
+            db.refresh(file_row)
+        else:
+            raise HTTPException(404,"File not found")
+    except Exception as e:
+        raise HTTPException(500,f"Error confirming file {e}")
 
 
 
@@ -181,6 +204,27 @@ def get_file_tree(project_id:str,auth_user=Depends(verify_clerk_user),db:Session
     except Exception as e:
 
         raise HTTPException(500,f"Error getting project file tree {e}")
+
+@crud_router.get('/project/{project_id}/kb-files')
+def get_kb_file_tree(project_id:str,auth_user=Depends(verify_clerk_user),db:Session=Depends(get_db)):
+    try:
+        file_data = db.query(File).filter(File.project_id == project_id,File.file_type=="knowledge_base").all()
+        
+        if not file_data:
+            return {
+                "project_id":project_id,
+                "tree":[]
+            }
+        
+        tree = build_file_tree(file_data,project_id)
+        
+        return {
+            "project_id":project_id,
+            "tree":tree
+        }
+        
+    except Exception as e:
+        raise HTTPException(500,f"Error getting project KB file tree {e}")
 
 @crud_router.get('/project/{project_id}/source-files')
 def get_all_source_files(project_id:UUID,auth_user=Depends(verify_clerk_user),db:Session=Depends(get_db)):

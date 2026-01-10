@@ -77,3 +77,14 @@ def generate_presigned_upload_url(key:str,content_type:str,expires_in: int = 300
         ExpiresIn=expires_in,
     )
 
+def object_check_s3(key:str):
+
+    try:
+        s3.head_object(Bucket=bucket, Key=key)
+        return True
+    except Exception as e:
+        if e.response["Error"]["Code"] == "404":
+            return False
+        raise
+
+

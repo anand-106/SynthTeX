@@ -7,12 +7,13 @@ import { useParams } from "next/navigation";
 import { Chat } from "./chat/chat";
 import { EditorSection } from "./editor/editor";
 import { Project, SelectedFile } from "@/types/types";
-import { ProjectTree } from "./projectTree";
+import { ProjectTree } from "./FileTree/projectTree";
 import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import { useEditorStore } from "@/stores/editorStore";
 import { useLayoutStore } from "@/stores/layoutStore";
 import { ActionBar } from "./editor/actionBar";
+import { KBTree } from "./FileTree/kbTree";
 
 
 const PDFViewer = dynamic(
@@ -103,21 +104,23 @@ setBgColor("#151515")
         <h1>Error getting data sources.</h1>
       </div>
     );
-  if (data && projectLoad.data)
-    return (
-      <div className=" h-[calc(100vh-4rem)] w-screen flex flex-col border-t border-white/20 ">
-        {/* <h1>{data.name}</h1> */}
-        <div className="w-full flex-1 flex h-full">
-        <ProjectTree />
-        <div className="flex flex-col flex-1">
-        <ActionBar/>
-        {
-          selectedFileType=="latex"?<EditorSection />:<PDFViewer url={selectedFileContent} />
-        }
-        
+    if (data && projectLoad.data)
+      return (
+        <div className=" h-[calc(100vh-4rem)] w-screen flex flex-col border-t border-white/20 ">
+          {/* <h1>{data.name}</h1> */}
+          <div className="w-full flex-1 flex flex-row h-full">
+            <div className="flex flex-col shrink-0">
+              <ProjectTree />
+              <KBTree />
+            </div>
+            <div className="flex flex-col flex-1">
+              <ActionBar/>
+              {
+                selectedFileType=="latex"?<EditorSection />:<PDFViewer url={selectedFileContent} />
+              }
+            </div>
+            <Chat />
+          </div>
         </div>
-        <Chat />
-        </div>
-      </div>
-    );
+      );
 }
