@@ -4,7 +4,7 @@ from typing_extensions import List
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from utils.crud.file_tree_builder import build_file_tree
-from utils.s3.uploader import generate_download_url, generate_presigned_upload_url, generate_presigned_url, object_check_s3, read_s3_bytes, upload_bytes
+from utils.s3.uploader import delete_s3_key, generate_download_url, generate_presigned_upload_url, generate_presigned_url, object_check_s3, read_s3_bytes, upload_bytes
 from db.get_db import get_db
 from utils.auth.isSignedin import verify_clerk_user
 from db.models import CompilationJob, CompileStatus, File, FileType, Project
@@ -91,6 +91,33 @@ def update_file(request:FileIn,file_id:UUID,auth_user=Depends(verify_clerk_user)
             "file_name":file_data.filename,
             "status" : "updated"
         }
+        
+    except Exception as e:
+
+        raise HTTPException(500,f"Error getting File {e}")
+
+@crud_router.delete('/file/{file_id}')
+def delete_file(file_id:UUID,auth_user=Depends(verify_clerk_user),db:Session=Depends(get_db)):
+
+    try:
+        
+        file_data = db.query(File).filter(File.id==file_id).first()
+
+        if not file_data:
+            raise HTTPException(404,"File not found")
+        
+        if delete_s3_key(file_data.storage_path):
+
+            db.delete(file_data)
+            db.commit()
+
+            return {
+                "id":file_data.id,
+                "file_name":file_data.filename,
+                "status" : "deleted"
+            }
+        else:
+            raise HTTPException(404,"File Not found")
         
     except Exception as e:
 
