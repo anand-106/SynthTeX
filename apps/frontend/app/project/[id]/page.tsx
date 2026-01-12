@@ -14,6 +14,7 @@ import { useEditorStore } from "@/stores/editorStore";
 import { useLayoutStore } from "@/stores/layoutStore";
 import { ActionBar } from "./editor/actionBar";
 import { KBTree } from "./FileTree/kbTree";
+import ImageViewer from "./editor/imageViewer";
 
 
 const PDFViewer = dynamic(
@@ -92,6 +93,12 @@ setBgColor("#151515")
     refetchOnMount: false,
   });
 
+  const ViewerMap ={
+    "latex" :<EditorSection />,
+    "pdf":<PDFViewer url={selectedFileContent} />,
+    "img":<ImageViewer url={selectedFileContent} />
+  }
+
   if (isLoading || projectLoad.isLoading)
     return (
       <div className="flex justify-center w-screen pt-[300px]">
@@ -116,7 +123,7 @@ setBgColor("#151515")
             <div className="flex flex-col flex-1">
               <ActionBar/>
               {
-                selectedFileType=="latex"?<EditorSection />:<PDFViewer url={selectedFileContent} />
+                selectedFileType&&ViewerMap[selectedFileType]
               }
             </div>
             <Chat />

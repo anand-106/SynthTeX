@@ -3,11 +3,11 @@ import { create } from 'zustand'
 interface EditorState {
   selectedFileId: string | null
   selectedFilePath: string | null
-  fileType: "latex" | "pdf" | null
+  fileType: "latex" | "pdf" |"img" | null
   latex: string
   activeEditorTab:"latex"| "preview" | null
   setActiveEditorTab:(tab: "latex"| "preview") => void
-  setSelectedFile: (id: string, path: string, content: string,type:"latex" | "pdf") => void
+  setSelectedFile: (id: string, path: string, content: string,type:"latex" | "pdf"| "img") => void
   setLatex: (content: string) => void
 }
 

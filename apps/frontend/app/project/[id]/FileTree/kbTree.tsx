@@ -31,13 +31,14 @@ export function KBTree() {
     try {
       const token = await getToken();
       const isPDF = FileName.toLowerCase().endsWith(".pdf");
-      if (isPDF) {
+      const isImg = FileName.toLowerCase().endsWith(".jpg") || FileName.toLowerCase().endsWith(".jpeg") || FileName.toLowerCase().endsWith(".png")
+      if (isPDF || isImg) {
         const res = await axiosClient.get(`/file/${fileId}/url`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
-        setSelectedFile(fileId, path, res.data.url, "pdf");
+        isPDF ? setSelectedFile(fileId, path, res.data.url, "pdf"):setSelectedFile(fileId, path, res.data.url, "img")
       } else {
         const cached = queryClient.getQueryData<SelectedFile>(["file", path]);
         if (cached) {
