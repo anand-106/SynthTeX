@@ -6,10 +6,11 @@ from s3 import read_s3_bytes
 
 
 def extract_relative_path(path: str) -> str:
-    marker = "/files/"
-    if marker not in path:
-        raise ValueError("Invalid storage path: missing '/files/'")
-    return path.split(marker, 1)[1]
+    marker = ["/files/","/kb/"]
+    for mk in marker:
+        if mk in path:
+            return path.split(mk, 1)[1]
+    raise ValueError("Invalid storage path: missing '/files/' or '/kb/'")
 
 def copy_project_to_e2b(files,sandbox:Sandbox,project_id:str):
 

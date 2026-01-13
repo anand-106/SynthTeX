@@ -16,6 +16,7 @@ export function ActionBar(){
 
     const param = useParams()
     const activeFileName = useEditorStore(state=>state.selectedFilePath)
+    const fileType = useEditorStore(state=>state.fileType)
     const filename = activeFileName?.split('/').pop()
     const project_id = param.id;
 
@@ -79,7 +80,7 @@ export function ActionBar(){
             <div className="flex gap-4">
                 {
 
-            filename?.endsWith(".pdf")?<DownloadButton />:<SaveButton />
+        fileType!="latex"?<DownloadButton />:<SaveButton />
                 }
             <CompileButton 
                 compileStatus={getDisplayStatus()} 

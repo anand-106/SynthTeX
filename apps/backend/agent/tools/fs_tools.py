@@ -2,9 +2,11 @@ import pprint
 from langchain.tools import ToolRuntime, tool, InjectedToolArg
 from typing import Annotated
 from dotenv import load_dotenv
+from pathlib import Path
 import os
 import json
 from agent.tools.tool_context import AgentContext
+from utils.agent_tools.file_reader import extract_text_from_docx_bytes, extract_text_from_pdf_bytes
 from db.models import File
 from db.db import SessionLocal
 from utils.s3.uploader import read_s3_bytes, upload_bytes, delete_s3_key
@@ -152,28 +154,39 @@ def list_files(runtime: Annotated[ToolRuntime[AgentContext], InjectedToolArg]):
 @tool
 def get_file_content(file_path: str, runtime: Annotated[ToolRuntime[AgentContext], InjectedToolArg]):
     """
-    Read and return the contents of a file from the project.
+    Read and return the contents of a file from the project or knowledge base.
 
     Use this tool to inspect existing files before making modifications,
-    or to answer user questions about file contents.
+    or to answer user questions about file contents. This tool can read
+    both project source files and knowledge base files.
 
     Purpose:
     - Read LaTeX source files to understand their structure
     - Check existing content before suggesting edits
     - Retrieve configuration files, bibliographies, or style files
+    - Read knowledge base files (PDF, DOCX, TXT) to use as context for document generation
 
     Args:
         file_path: The full storage path of the file to read.
                    This MUST be the 'path' value returned by list_files.
-                   Example: 'dev/projects/<project_id>/files/main.tex'
+                   Examples:
+                   - Project files: 'dev/projects/<project_id>/files/main.tex'
+                   - Knowledge base files: 'dev/projects/<project_id>/kb/Anand-S-Resume-20251231.pdf'
+
+    Supported File Types:
+    - Text files (.tex, .txt, .bib, etc.): Returns UTF-8 decoded content
+    - PDF files (.pdf): Extracts and returns text content from PDF documents
+    - DOCX files (.docx): Extracts and returns text content from Word documents
+    - Knowledge base files: Can read PDF and DOCX files from the knowledge base directory
 
     Rules:
     - ALWAYS call list_files first to get the correct file path
     - Do NOT guess or construct file paths manually
     - The file_path must be an exact match from list_files output
+    - For knowledge base files, use paths that include '/kb/' in the storage path
 
     Returns:
-    - The file content as a UTF-8 string if successful
+    - The file content as a string (extracted text for PDF/DOCX, UTF-8 decoded for text files)
     - An error message string if the file cannot be read
 
     This tool does NOT:
@@ -184,8 +197,16 @@ def get_file_content(file_path: str, runtime: Annotated[ToolRuntime[AgentContext
     print(f"get file content tool accessed for the file {file_path}")
 
     try:
+        content = ""
         data = read_s3_bytes(file_path)
-        content = data.decode("utf-8")
+        ext = Path(file_path).suffix
+        if ext == ".pdf":
+            content = extract_text_from_pdf_bytes(data)
+        elif ext == ".docx":
+            content = extract_text_from_docx_bytes(data)
+        else:
+            content = data.decode("utf-8")
+            
         return {
             "tool_name":"get_file_content",
             "file_path":file_path,
