@@ -89,11 +89,14 @@ function AIMessage({ message, allMessages }: { message: ChatMessage; allMessages
       switch (mes_dict.name) {
         case "get_file_content": {
           const fileName = mes_dict.args.file_path.split("/").pop();
+          const {start_line,end_line} = mes_dict.args
 
           return (
             <div className="px-2 py-4 text-white/70">
               <h1 className="break-all whitespace-pre-wrap text-sm">
-                Reading {fileName}
+                Reading {fileName} {
+                  
+                }
               </h1>
             </div>
           );

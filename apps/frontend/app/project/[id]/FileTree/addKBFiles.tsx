@@ -90,6 +90,6 @@ export function AddKBFiles(){
         onChange={onFilesSelected}
         hidden={true}
         />
-        <RiFileAddLine />
+        <RiFileAddLine size={18} />
     </div>
 }

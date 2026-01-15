@@ -1,4 +1,5 @@
 import pprint
+from typing_extensions import Optional
 from langchain.tools import ToolRuntime, tool, InjectedToolArg
 from typing import Annotated
 from dotenv import load_dotenv
@@ -152,7 +153,7 @@ def list_files(runtime: Annotated[ToolRuntime[AgentContext], InjectedToolArg]):
         return json.dumps({"status": "error", "message": "Error listing files"})
     
 @tool
-def get_file_content(file_path: str, runtime: Annotated[ToolRuntime[AgentContext], InjectedToolArg]):
+def get_file_content(file_path: str,start_line:Optional[int]=None,end_line :Optional[int]=None, runtime: Annotated[ToolRuntime[AgentContext], InjectedToolArg]=None):
     """
     Read and return the contents of a file from the project or knowledge base.
 
@@ -172,6 +173,12 @@ def get_file_content(file_path: str, runtime: Annotated[ToolRuntime[AgentContext
                    Examples:
                    - Project files: 'dev/projects/<project_id>/files/main.tex'
                    - Knowledge base files: 'dev/projects/<project_id>/kb/Anand-S-Resume-20251231.pdf'
+        start_line: Optional 1-based starting line number for partial reads.
+                    - If not provided (None) and end_line is also None, the entire file is returned.
+                    - If not provided (None) but end_line is provided, reading starts from the first line.
+        end_line:   Optional 1-based ending line number for partial reads (exclusive in practice).
+                    - If not provided (None) but start_line is provided, reading continues from start_line to the end of the file.
+                    - If both start_line and end_line are provided, only lines in that range are returned.
 
     Supported File Types:
     - Text files (.tex, .txt, .bib, etc.): Returns UTF-8 decoded content
@@ -186,7 +193,8 @@ def get_file_content(file_path: str, runtime: Annotated[ToolRuntime[AgentContext
     - For knowledge base files, use paths that include '/kb/' in the storage path
 
     Returns:
-    - The file content as a string (extracted text for PDF/DOCX, UTF-8 decoded for text files)
+    - The file content as a string (extracted text for PDF/DOCX, UTF-8 decoded for text files).
+      When start_line/end_line are provided, only the selected line range is returned.
     - An error message string if the file cannot be read
 
     This tool does NOT:
@@ -206,12 +214,26 @@ def get_file_content(file_path: str, runtime: Annotated[ToolRuntime[AgentContext
             content = extract_text_from_docx_bytes(data)
         else:
             content = data.decode("utf-8")
+        
+
+        if start_line is not None or end_line is not None:
+
+            lines = content.splitlines()
+
+            start = max((start_line or 1)-1,0)
+            end = end_line if end_line is not None else len(lines)
+
+            sliced_lines = lines[start:end]
+
+            content = "\n".join(sliced_lines)
             
         return {
-            "tool_name":"get_file_content",
-            "file_path":file_path,
-            "content":content
-        }  
+            "tool_name": "get_file_content",
+            "file_path": file_path,
+            "start_line": start_line,
+            "end_line": end_line,
+            "content": content,
+        }
     except Exception as e:
         print(f"Error reading file {file_path}: {e}")
         return f"Error reading file: {str(e)}"

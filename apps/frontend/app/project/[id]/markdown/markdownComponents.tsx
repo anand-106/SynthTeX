@@ -1,7 +1,7 @@
 export const components = {
     table({ children }: { children?: React.ReactNode }) {
       return (
-        <div className="overflow-x-auto w-full">
+        <div className="overflow-x-auto w-full scrollbar scrollbar-track-[#151515] scrollbar-thumb-white/30">
           <table className="min-w-max border-collapse">
             {children}
           </table>

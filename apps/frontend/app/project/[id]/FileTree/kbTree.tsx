@@ -104,8 +104,8 @@ export function KBTree() {
 
   return (
     <div className="flex-1 overflow-hidden w-[290px] shrink-0 bg-[#151515] border-r border-t border-white/20 px-4">
-      <div className="flex justify-between">
-        <h1>Kb Files</h1>
+      <div className="flex justify-between pt-2">
+        <h1>Reference Files</h1>
         <AddKBFiles />
       </div>
       <Tree
