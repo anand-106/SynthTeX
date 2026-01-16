@@ -90,8 +90,9 @@ function ChatBar() {
       const token = await getToken();
 
       ws = new WebSocket(
-        `ws://localhost:8000/ws/project/${projectId}?token=${encodeURIComponent(token || "")}`
+        `wss://api.anands.codes/ws/project/${projectId}?token=${encodeURIComponent(token || "")}`
       );
+      
 
       ws.onopen = () => {
         console.log("WebSocket connected");
