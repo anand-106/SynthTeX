@@ -93,10 +93,8 @@ function AIMessage({ message, allMessages }: { message: ChatMessage; allMessages
 
           return (
             <div className="px-2 py-4 text-white/70">
-              <h1 className="break-all whitespace-pre-wrap text-sm">
-                Reading {fileName} {
-                  
-                }
+              <h1 className="break-all whitespace-pre-wrap text-sm flex">
+                Reading {fileName} {start_line&&(<h2>from line {start_line} </h2>)} {end_line&&(<h2>till line {end_line}</h2>)}
               </h1>
             </div>
           );

@@ -43,7 +43,8 @@ export function ActionBar(){
             return res.data
         },
         onSuccess: (data) => {
-            setCompileID(data.job_id)  
+            setCompileID(data.job_id)
+
         }
     })
 
@@ -70,7 +71,12 @@ export function ActionBar(){
 
     const getDisplayStatus = (): "idle"|"queued"|"running"|"success"|"failed" => {
         if (compileMutation.isPending) return 'queued'
-        if (jobStatus?.status) return jobStatus.status
+        if (jobStatus?.status)
+            {
+                if (jobStatus.status === "success") queryClient.invalidateQueries({queryKey:[`Project_tree_${project_id}`]})
+                return jobStatus.status
+            }
+                
         return 'idle'
     }
 

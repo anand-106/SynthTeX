@@ -90,7 +90,7 @@ function ChatBar() {
       const token = await getToken();
 
       ws = new WebSocket(
-        `wss://api.anands.codes/ws/project/${projectId}?token=${encodeURIComponent(token || "")}`
+        `${process.env.NEXT_PUBLIC_WS_URL}/ws/project/${projectId}?token=${encodeURIComponent(token || "")}`
       );
       
 

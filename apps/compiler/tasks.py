@@ -1,4 +1,3 @@
-
 import os
 from utils.e2b import get_sandbox
 from db.models import CompilationJob, CompileStatus, File, FileType
@@ -11,28 +10,29 @@ load_dotenv()
 
 S3_ENV_PREFIX = os.getenv("S3_ENV_PREFIX")
 
-async def latex_job_compiler(ctx,job_data):
-
-
+async def latex_job_compiler(ctx, job_data):
     entry_file = "main"
 
-    project_id = job_data.get("project_id","")
-    job_id = job_data.get("job_id","")
-    user_id = job_data.get("user_id","")
-    files = job_data.get("files",[])
+    project_id = job_data.get("project_id", "")
+    job_id = job_data.get("job_id", "")
+    user_id = job_data.get("user_id", "")
+    files = job_data.get("files", [])
 
     sandbox = get_sandbox(user_id=user_id)
-    copy_project_to_e2b(files=files,sandbox=sandbox,project_id=project_id)
+    copy_project_to_e2b(files=files, sandbox=sandbox, project_id=project_id)
+
+    db = SessionLocal()
+    compilation_success = False
+    error_log = ""
 
     try:
-        # Ensure output directory exists and is clean
+
         sandbox.commands.run(
             cwd=f'/home/user/{project_id}',
             cmd="mkdir -p output && rm -rf output/*",
             timeout=30,
         )
 
-        # Run pdflatex 3 times to resolve all references (TOC, citations, etc.)
         for i in range(3):
             try:
                 result = sandbox.commands.run(
@@ -46,40 +46,89 @@ async def latex_job_compiler(ctx,job_data):
                     ),
                     timeout=120,
                 )
-                print(f"pdflatex pass {i+1} completed")
+
+                if result.stdout:
+                    error_log += f"\n--- pdflatex pass {i+1} stdout ---\n{result.stdout}"
+                if result.stderr:
+                    error_log += f"\n--- pdflatex pass {i+1} stderr ---\n{result.stderr}"
+                
+                print(f"pdflatex pass {i+1} completed with exit code: {result.exit_code}")
+                
+
+                if result.exit_code != 0:
+                    error_log += f"\npdflatex pass {i+1} exited with code {result.exit_code}"
+                    
             except Exception as pass_error:
+                error_log += f"\npdflatex pass {i+1} exception: {str(pass_error)}"
                 print(f"pdflatex pass {i+1} completed with warnings/errors: {pass_error}")
-            
-    except Exception as e:
-        print(f"Compilation had errors: {e}")
 
-    key = f"{S3_ENV_PREFIX}/projects/{project_id}/files/output/{entry_file}.pdf"
+        pdf_path = f"/home/user/{project_id}/output/{entry_file}.pdf"
+        try:
 
-    content = sandbox.files.read(path=f"/home/user/{project_id}/output/{entry_file}.pdf",format="bytes")
+            sandbox.files.read(path=pdf_path, format="bytes")
+            compilation_success = True
+            print(f"PDF file found at {pdf_path}")
+        except Exception as e:
+            error_log += f"\nPDF file not found: {str(e)}"
+            print(f"PDF file does not exist at {pdf_path}: {e}")
+            compilation_success = False
 
-    upload_bytes(key=key,content=content,content_type="application/pdf")
+        if not compilation_success:
 
-    db = SessionLocal()
-    try:
+            compile_job = db.query(CompilationJob).filter(CompilationJob.id == job_id).first()
+            if compile_job:
+                compile_job.status = CompileStatus.failed
+                compile_job.log = error_log
+                db.commit()
+            db.close()
+            raise Exception(f"LaTeX compilation failed. Errors: {error_log}")
+
+
+        key = f"{S3_ENV_PREFIX}/projects/{project_id}/files/output/{entry_file}.pdf"
+        content = sandbox.files.read(path=pdf_path, format="bytes")
+        upload_bytes(key=key, content=content, content_type="application/pdf")
+
+
         compile_job = db.query(CompilationJob).filter(CompilationJob.id == job_id).first()
         if compile_job:
             compile_job.pdf_path = key
             compile_job.status = CompileStatus.success
-
+            compile_job.log = error_log if error_log else "Compilation successful"
             db.commit()
-        
-        file_row=db.query(File).filter(File.project_id==project_id,File.storage_path==key,File.file_type==FileType.source).first()
-        if not file_row:
 
-            file_row = File(project_id=project_id,filename=f"{entry_file}.pdf",storage_path=key,file_type=FileType.source,content="")
+        file_row = db.query(File).filter(
+            File.project_id == project_id,
+            File.storage_path == key,
+            File.file_type == FileType.source
+        ).first()
+        
+        if not file_row:
+            file_row = File(
+                project_id=project_id,
+                filename=f"{entry_file}.pdf",
+                storage_path=key,
+                file_type=FileType.source,
+                content=""
+            )
             db.add(file_row)
             db.commit()
             db.refresh(file_row)
         else:
             print("db record already exists")
+
+    except Exception as e:
+        print(f"Compilation had errors: {e}")
+        try:
+            compile_job = db.query(CompilationJob).filter(CompilationJob.id == job_id).first()
+            if compile_job:
+                compile_job.status = CompileStatus.failed
+                compile_job.log = f"{error_log}\n\nFinal error: {str(e)}"
+                db.commit()
+        except Exception as db_error:
+            print(f"Failed to update job status: {db_error}")
+        finally:
+            db.close()
+        raise
     finally:
-        
-        db.close()
-
-    
-
+        if db:
+            db.close()

@@ -26,7 +26,7 @@ export function HeaderWrapper() {
     >
       <div className="flex">
         <h1 className="font-bold text-2xl font-gsans">Synth</h1>
-        <h1 className="font-bold text-2xl font-gsans bg-linear-to-tl via-violet-500 to-zinc-400 bg-clip-text text-transparent">
+        <h1 className="font-bold text-2xl font-gsans bg-linear-to-tl from-[#AC71F8] to-[#F994D4] bg-clip-text text-transparent">
           Tex
         </h1>
       </div>
