@@ -17,7 +17,7 @@ async def verify_clerk_user(request: Request):
     try:
         auth_state = clerk.authenticate_request(
             request,
-            AuthenticateRequestOptions(authorized_parties=["http://localhost:3000"])
+            AuthenticateRequestOptions(authorized_parties=["http://localhost:3000","https://synthtex.anands.codes","https://www.synthtex.anands.codes"])
         )
     except Exception as e:
         raise HTTPException(status_code=401, detail=f"Invalid Clerk token: {e}")
