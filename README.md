@@ -6,8 +6,6 @@
 
 Write LaTeX documents with AI assistance. Chat with your code, and compile to PDF—all in one place.
 
-[![Demo Video](https://img.shields.io/badge/📹-Watch%20Demo-red?style=for-the-badge)](https://github.com/yourusername/SynthTeX/blob/main/assets/SynthTex-Final.mp4)
-
 </div>
 
 ---
@@ -16,7 +14,7 @@ Write LaTeX documents with AI assistance. Chat with your code, and compile to PD
 
 <div align="center">
 
-![SynthTeX Demo](assets/SynthTex-Final.gif)
+![SynthTeX Demo](assets/SynthTex-Demo.gif)
 
 </div>
 
