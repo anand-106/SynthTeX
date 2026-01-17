@@ -16,10 +16,7 @@ Write LaTeX documents with AI assistance. Chat with your code, and compile to PD
 
 <div align="center">
 
-<video width="100%" controls>
-  <source src="assets/SynthTex-Final.mp4" type="video/mp4">
-  Your browser does not support the video tag.
-</video>
+![SynthTeX Demo](assets/SynthTex-Final.gif)
 
 </div>
 
