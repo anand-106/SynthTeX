@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🚀 SynthTeX
+# SynthTeX
 
 ### *The Cursor for LaTeX!*
 
